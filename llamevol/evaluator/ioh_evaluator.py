@@ -135,7 +135,8 @@ class IOHObjectiveFn:
                 self.progress_bar = None
 
     def __call__(self, x):
-        if self.obj_fn is not None and self.budget is not None and self.obj_fn.state.evaluations > self.budget:
+        # Group 11 change: was "> budget", which allowed budget + 1 evaluations (61 instead of 60)
+        if self.obj_fn is not None and self.budget is not None and self.obj_fn.state.evaluations >= self.budget:
             _logger.error("%s Over budget: %s/%s", self.name, self.obj_fn.state.evaluations, self.budget)
             if not self.ignore_over_budget:
                 raise BOOverBudgetException("OverBudgetException", "The total number(during the whole process) of the sample points which evaluated by func should not exceed the budget. Using the surrogate model, accquisition function or any other methods suited your purposes instead of the func to evaluate the points is a alternative option.")
@@ -447,6 +448,13 @@ class IOHEvaluator(AbstractEvaluator):
         # better to wait for all running tasks to finish in case of resource competition
         if task_manager is not None:
             task_manager.shutdown(wait=True, cancel_futures=_should_cancel)
+        elif _should_cancel and isinstance(executor, concurrent.futures.ProcessPoolExecutor):
+            # Group 11 change: with wait=True a timed out (or already failed) candidate kept running
+            # until its slowest run finished, so the timeout did not limit anything. We kill the
+            # worker processes instead, the candidate is already marked as failed.
+            for proc in list(executor._processes.values()):
+                proc.terminate()
+            executor.shutdown(wait=True, cancel_futures=True)
         else:
             executor.shutdown(wait=True, cancel_futures=_should_cancel)
         _logger.info("Evaluating %s: Executor shut down", cls_name)

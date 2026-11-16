@@ -1,5 +1,6 @@
 import os
 import time
+import json
 import pickle
 import math
 import difflib
@@ -158,6 +159,32 @@ class Population(ABC):
             with open(res_path, 'w', encoding='utf-8') as f:
                 f.write(raw_res)
 
+            # Group 11 change: also append every candidate to one jsonl file, so the full
+            # search history (prompt, response, code, error, score) is in a single place
+            eval_res = handler.eval_result
+            record = {
+                'generation': generation,
+                'index': index,
+                'id': individual.id,
+                'parent_ids': individual.parent_id if isinstance(individual.parent_id, list) else [individual.parent_id],
+                'name': name,
+                'fitness': None if fitness is None or not np.isfinite(fitness) else float(fitness),
+                'llm_model': handler.llm_model,
+                'llm_queries': handler.query_time,
+                'prompt_tokens': handler.prompt_token_count,
+                'response_tokens': handler.response_token_count,
+                'execution_time': None if eval_res is None else eval_res.total_execution_time,
+                'aocc_per_run': [] if eval_res is None else [float(r.log_y_aoc) for r in eval_res.result],
+                'error': handler.error,
+                'system_prompt': handler.sys_prompt,
+                'prompt': handler.prompt,
+                'response': handler.raw_response,
+                'code': code,
+                'feedback': handler.feedback,
+            }
+            with open(f'{_save_dir}/history.jsonl', 'a', encoding='utf-8') as f:
+                f.write(json.dumps(record, default=str) + '\n')
+
     def save(self, filename=None, dirname=None, suffix=None):
         self._update_save_dir_if_need()
         _save_dir = self.save_dir + '/' + self._save_dir_suffix
@@ -181,6 +208,14 @@ class Population(ABC):
         except Exception as e:
             logging.error("Error saving population: %s", e)
     
+    def save_checkpoint(self, file_path):
+        # Group 11 change: write the population to a fixed file (first to a temp file, so a crash
+        # while writing does not destroy the previous checkpoint)
+        tmp_path = file_path + '.tmp'
+        with open(tmp_path, 'wb') as f:
+            pickle.dump(self, f)
+        os.replace(tmp_path, file_path)
+
     @classmethod
     def load(cls, filepath=None):
         if filepath is None and not os.path.exists(filepath):

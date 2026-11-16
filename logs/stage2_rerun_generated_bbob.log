@@ -1,0 +1,38 @@
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Stage 2 | group 11 | dim=6 | budget=600 | seeds 110-119
+20 runs left, 40 parallel workers
+  RealWorld_1124 / Generated_BBOB (NovelBayesianOptimizationBO) / seed 119: best 1.6609e+00 [ok] (3212 s, total 53.5 min)
+  RealWorld_1124 / Generated_BBOB (NovelBayesianOptimizationBO) / seed 118: best 2.7895e+00 [ok] (3240 s, total 54.0 min)
+  RealWorld_1124 / Generated_BBOB (NovelBayesianOptimizationBO) / seed 116: best 2.1850e+00 [ok] (3290 s, total 54.8 min)
+  RealWorld_1124 / Generated_BBOB (NovelBayesianOptimizationBO) / seed 111: best 2.4480e+00 [ok] (3427 s, total 57.1 min)
+  RealWorld_1124 / Generated_BBOB (NovelBayesianOptimizationBO) / seed 115: best 2.0166e+00 [ok] (3448 s, total 57.5 min)
+  RealWorld_1124 / Generated_BBOB (NovelBayesianOptimizationBO) / seed 114: best 2.1878e+00 [ok] (3470 s, total 57.8 min)
+  RealWorld_1124 / Generated_BBOB (NovelBayesianOptimizationBO) / seed 112: best 2.9997e+00 [ok] (3623 s, total 60.4 min)
+  RealWorld_1124 / Generated_BBOB (NovelBayesianOptimizationBO) / seed 110: best 3.0029e+00 [ok] (3662 s, total 61.0 min)
+  RealWorld_1124 / Generated_BBOB (NovelBayesianOptimizationBO) / seed 113: best 1.0571e+00 [ok] (3668 s, total 61.1 min)
+  BBOB_F8 / Generated_BBOB (NovelBayesianOptimizationBO) / seed 115: best 1.5914e+02 [ok] (4033 s, total 67.2 min)
+  RealWorld_1124 / Generated_BBOB (NovelBayesianOptimizationBO) / seed 117: best 1.8518e+00 [ok] (4041 s, total 67.4 min)
+  BBOB_F8 / Generated_BBOB (NovelBayesianOptimizationBO) / seed 110: best 1.5757e+02 [ok] (4135 s, total 68.9 min)
+  BBOB_F8 / Generated_BBOB (NovelBayesianOptimizationBO) / seed 113: best 1.5645e+02 [ok] (4142 s, total 69.0 min)
+  BBOB_F8 / Generated_BBOB (NovelBayesianOptimizationBO) / seed 118: best 1.5673e+02 [ok] (4230 s, total 70.5 min)
+  BBOB_F8 / Generated_BBOB (NovelBayesianOptimizationBO) / seed 111: best 1.5995e+02 [ok] (4265 s, total 71.1 min)
+  BBOB_F8 / Generated_BBOB (NovelBayesianOptimizationBO) / seed 112: best 1.5821e+02 [ok] (4268 s, total 71.1 min)
+  BBOB_F8 / Generated_BBOB (NovelBayesianOptimizationBO) / seed 114: best 1.5644e+02 [ok] (4280 s, total 71.3 min)
+  BBOB_F8 / Generated_BBOB (NovelBayesianOptimizationBO) / seed 116: best 1.5810e+02 [ok] (4291 s, total 71.5 min)
+  BBOB_F8 / Generated_BBOB (NovelBayesianOptimizationBO) / seed 117: best 1.5474e+02 [ok] (4324 s, total 72.1 min)
+  BBOB_F8 / Generated_BBOB (NovelBayesianOptimizationBO) / seed 119: best 1.6518e+02 [ok] (4441 s, total 74.0 min)
+
+Saved: outputs/stage2_benchmark/stage2_convergence_data.csv
+Saved: outputs/stage2_benchmark/stage2_final_performance.csv
+
+       Problem    Metric_Type                                    Algorithm       mean        std        se     median        min        max  runs
+       BBOB_F8 loss f - f_opt                                       CMA_ES   4.202973   1.004340  0.317600   4.394288   1.814023   5.375808    10
+       BBOB_F8 loss f - f_opt Generated_BBOB (NovelBayesianOptimizationBO)   9.101476   2.854675  0.902728   8.684954   5.589693  16.031805    10
+       BBOB_F8 loss f - f_opt                              BoTorch_Vanilla  35.169275  16.122399  5.098350  36.969703  17.162663  58.624448    10
+       BBOB_F8 loss f - f_opt                Generated_RealWorld (AEBO_SB) 288.525657 155.048102 49.030515 265.848875 101.450597 562.377228    10
+RealWorld_1124    objective f                                       CMA_ES   1.839522   0.534126  0.168905   1.918933   0.899682   2.535999    10
+RealWorld_1124    objective f Generated_BBOB (NovelBayesianOptimizationBO)   2.219947   0.618365  0.195544   2.186414   1.057138   3.002946    10
+RealWorld_1124    objective f                              BoTorch_Vanilla   2.318395   0.484002  0.153055   2.291707   1.612606   3.010259    10
+RealWorld_1124    objective f                Generated_RealWorld (AEBO_SB)   2.714572   0.454748  0.143804   2.656008   1.917503   3.283421    10
+done

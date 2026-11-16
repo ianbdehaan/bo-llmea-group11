@@ -2,6 +2,7 @@
 """
 import time
 import os
+import re
 from datetime import datetime
 from abc import ABC, abstractmethod
 import logging
@@ -24,8 +25,21 @@ OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL")
 ONEHUB_API_KEY = os.getenv("ONEHUB_API_KEY")
 ONEHUB_BASE_URL = os.getenv("ONEHUB_BASE_URL")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+CEREBRAS_API_KEY = os.getenv("CEREBRAS_API_KEY")
+CEREBRAS_BASE_URL = os.getenv("CEREBRAS_BASE_URL", "https://api.cerebras.ai/v1")
+# a model served on our own machine (ollama, llama.cpp or vllm all offer an OpenAI compatible api)
+LOCAL_LLM_BASE_URL = os.getenv("LOCAL_LLM_BASE_URL", "http://localhost:11434/v1")
+LOCAL_LLM_API_KEY = os.getenv("LOCAL_LLM_API_KEY", "local")
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 
 LLMS = {
+    # Group 11 change: gpt-oss-120b through Cerebras (OpenAI compatible api, larger free daily limit)
+    "cerebras/gpt-oss-120b": ("gpt-oss-120b", CEREBRAS_API_KEY, CEREBRAS_BASE_URL, 2, "openai"),
+    # Group 11 change: the same open-weight models served locally (ollama model names)
+    "local/gpt-oss-120b": ("gpt-oss:120b", LOCAL_LLM_API_KEY, LOCAL_LLM_BASE_URL, 0, "openai"),
+    "local/gpt-oss-20b": ("gpt-oss:20b", LOCAL_LLM_API_KEY, LOCAL_LLM_BASE_URL, 0, "openai"),
+    # Group 11 change: Qwen3-Coder-30B-A3B (Q4_K_M) on the Ollama server of the machine (native api)
+    "ollama/qwen3-coder": ("qwen3-coder:latest", None, OLLAMA_URL, 0, "ollama"),
     "openai/gpt-oss-120b": ("openai/gpt-oss-120b", GROQ_API_KEY, GROQ_BASE_URL_FOR_OPENAI_CLIENT, 2, "groq"),
     "openai/gpt-oss-20b": ("openai/gpt-oss-20b", GROQ_API_KEY, GROQ_BASE_URL_FOR_OPENAI_CLIENT, 2, "groq"),
     "qwen/qwen3.8-27b": ("qwen/qwen3.8-27b", GROQ_API_KEY, GROQ_BASE_URL_FOR_OPENAI_CLIENT, 2, "groq"),
@@ -61,6 +75,7 @@ class LLMClientResponse:
         self._prompt_token_count = 0
         self._response_token_count = 0
         self.error = None
+        self.finish_reason = None
 
     @property
     def prompt_token_count(self):
@@ -242,6 +257,43 @@ class OpenAIClient(LLMClient):
             res.text = response.choices[0].message.content
             res.prompt_token_count = response.usage.prompt_tokens
             res.response_token_count = response.usage.completion_tokens
+            # "length" means max_tokens was used up (for reasoning models often by the reasoning)
+            res.finish_reason = response.choices[0].finish_reason
+            return res
+        except Exception as e:
+            res = LLMClientResponse(None)
+            res.error = e
+            return res
+
+class OllamaClient(LLMClient):
+    # Group 11 change: talks to the native Ollama api (/api/chat). The OpenAI compatible endpoint of
+    # Ollama ignores the context length, so long prompts (population summary + code) would be cut
+    # silently to the default context. Here we pass num_ctx explicitly.
+    def __init__(self, api_key, model_name, base_url=None):
+        super().__init__(api_key, model_name, base_url)
+        self.num_ctx = int(os.getenv("OLLAMA_NUM_CTX", "32768"))
+
+    def raw_completion(self, messages, **kwargs):
+        options = {"num_ctx": self.num_ctx}
+        if "temperature" in kwargs:
+            options["temperature"] = kwargs["temperature"]
+        if "max_tokens" in kwargs:
+            options["num_predict"] = kwargs["max_tokens"]
+        if "seed" in kwargs:
+            options["seed"] = kwargs["seed"]
+        payload = {"model": self.model_name, "messages": messages, "stream": False, "options": options}
+        try:
+            response = requests.post(self.base_url + "/api/chat", json=payload, timeout=kwargs.get("timeout", 600))
+            response.raise_for_status()
+            json_res = response.json()
+            res = LLMClientResponse(json_res)
+            res.text = json_res["message"]["content"]
+            res.prompt_token_count = json_res.get("prompt_eval_count")
+            res.response_token_count = json_res.get("eval_count")
+            res.finish_reason = json_res.get("done_reason")
+            # warn when the prompt fills the whole context (then ollama drops the start of the prompt)
+            if res.prompt_token_count is not None and res.prompt_token_count >= self.num_ctx - 16:
+                logging.warning("Prompt (%s tokens) reached the context size %s", res.prompt_token_count, self.num_ctx)
             return res
         except Exception as e:
             res = LLMClientResponse(None)
@@ -309,6 +361,8 @@ class LLMmanager:
             self.client = OpenAIClient(api_key, model_name, groq_url)
         elif client_str == "request":
             self.client = RequestClient(api_key, model_name, base_url)
+        elif client_str == "ollama":
+            self.client = OllamaClient(api_key, model_name, base_url)
         elif client_str == "google":
             self.client = GoogleGenAIClient(api_key, model_name, base_url)
         else:
@@ -316,6 +370,9 @@ class LLMmanager:
 
         self.max_interval = _model[3]
         self.mock_res_provider:Callable[..., str] = None
+        # how often and how long we wait when the api returns an error (rate limit, timeout, ...)
+        self.max_api_retries = 30
+        self.max_wait_seconds = 3600
 
     def model_name(self) -> str:
         return self.client.name
@@ -325,15 +382,50 @@ class LLMmanager:
             _content = self.mock_res_provider(session_messages, **kwargs)
             res = LLMClientResponse(None)
             res.text = _content
-            res.response_token_count = len(_content.split()) 
+            res.response_token_count = len(_content.split())
             return res
-        
-        logging.info("LLM: %s, %s", self.model_name(), kwargs) 
-        response = self.client.raw_completion(
-            session_messages,
-            **kwargs
-        )
 
-        if response.error is not None:
-            logging.error("LLM: %s, %s", self.model_name(), response.error)
+        logging.info("LLM: %s, %s", self.model_name(), kwargs)
+
+        # Group 11 change: the original code returned API errors (e.g. rate limits) directly,
+        # so a failed request immediately became a failed candidate. We now wait and retry
+        # API errors, so only real model answers are counted as candidates.
+        wait_time = 10
+        for i_api in range(self.max_api_retries):
+            response = self.client.raw_completion(
+                session_messages,
+                **kwargs
+            )
+            if response.error is None:
+                break
+            logging.error("LLM: %s, attempt %s/%s, %s", self.model_name(), i_api + 1, self.max_api_retries, response.error)
+            # use the waiting time suggested by the server if it gives one
+            suggested = _retry_after_seconds(response.error)
+            sleep_time = suggested if suggested is not None else wait_time
+            sleep_time = min(sleep_time + 1, self.max_wait_seconds)
+            logging.info("Waiting %.0f seconds before calling the LLM again", sleep_time)
+            time.sleep(sleep_time)
+            # exponential backoff for errors without a suggested waiting time
+            wait_time = min(wait_time * 2, self.max_wait_seconds)
         return response
+
+
+def _retry_after_seconds(error):
+    # Groq/Cerebras (OpenAI compatible) put the waiting time in the retry-after header
+    # or in the error message, e.g. "Please try again in 7m12.5s"
+    resp = getattr(error, "response", None)
+    if resp is not None:
+        header = resp.headers.get("retry-after")
+        if header is not None:
+            try:
+                return float(header)
+            except ValueError:
+                pass
+    msg = str(error)
+    match = re.search(r"try again in (?:(\d+)h)?(?:(\d+)m(?!s))?(?:([\d.]+)s)?", msg)
+    if match and any(match.groups()):
+        hours = float(match.group(1) or 0)
+        minutes = float(match.group(2) or 0)
+        seconds = float(match.group(3) or 0)
+        return hours * 3600 + minutes * 60 + seconds
+    return None

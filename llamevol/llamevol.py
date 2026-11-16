@@ -59,6 +59,8 @@ class LLaMEvol:
             _llm_params.update(options.get("llm_params", {}))
         logging.info("Querying with: %s", _llm_params)
         res_content = ''
+        # Group 11 change: keep the reason of every failed try, so it ends up in the logs
+        failed_tries = []
         for i_try in range(retry):
             response = llm.chat(session_messages, **_llm_params)
             res_content = response.text
@@ -68,11 +70,17 @@ class LLaMEvol:
 
             # Retry if no response from the model
             if res_content is None or res_content == "" :
-                logging.error("No response from the model.") 
+                if response.error is not None:
+                    reason = f"API error: {response.error}"
+                else:
+                    reason = f"empty answer (finish_reason={response.finish_reason}, completion tokens={response.response_token_count})"
+                failed_tries.append(f"try {i_try + 1}: {reason}")
+                logging.error("No response from the model: %s", reason)
                 logging.error("Retrying: %s/%s", i_try + 1, retry)
             else:
                 response_handler.extract_response(res_content, task=task)
                 if not response_handler.code or not response_handler.code_name:
+                    failed_tries.append(f"try {i_try + 1}: answer without a code block or BO class name (finish_reason={response.finish_reason})")
                     logging.error("No code extracted from the model.")
                     logging.error("Retrying: %s/%s", i_try + 1, retry)
                     logging.error("\n%s", res_content)
@@ -85,7 +93,7 @@ class LLaMEvol:
         response_handler.raw_response = res_content
 
         if not response_handler.code or not response_handler.code_name:
-            err = NoCodeException("ExtractionError: No code extracted from the model.")
+            err = NoCodeException("ExtractionError: No code extracted from the model.\n" + "\n".join(failed_tries))
             response_handler.error = str(err)
             response_handler.error_type = err.__class__.__name__
 
@@ -261,6 +269,11 @@ class LLaMEvol:
             logging.info('%s', _token_log[-1])
 
             population.select_next_generation()
+
+            # Group 11 change: save the population after every generation, so a search that
+            # stops (rate limit, reboot) can be resumed from this file by stage1_run.py
+            if options is not None and options.get("checkpoint_path"):
+                population.save_checkpoint(options["checkpoint_path"])
 
             best_ind = population.get_best_individual(maximize=True)
             if best_ind is not None:

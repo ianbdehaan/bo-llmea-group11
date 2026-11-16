@@ -1,0 +1,3 @@
+target,candidates,failed,best_index,best_generation,best_name,best_aocc,prompt_tokens,response_tokens
+"BBOB F8, instance 1",100,20,89,8,NovelBayesianOptimizationBO,0.3499398757371678,397212,323002
+Real-world problem 1124,100,22,94,8,AEBO_SB,0.46006480373418873,357820,279402

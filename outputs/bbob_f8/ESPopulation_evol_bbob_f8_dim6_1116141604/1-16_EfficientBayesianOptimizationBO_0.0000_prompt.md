@@ -1,0 +1,238 @@
+You are a highly skilled computer scientist in the field of natural computing. Your task is to design novel metaheuristic algorithms to solve black box optimization problems
+
+
+The optimization algorithm is evaluated on BBOB function 8 (Rosenbrock, original), instance 1, dimension 6, minimization. Your task is to write the optimization algorithm in Python code. The code should contain an `__init__(self, budget, dim)` function and the function `__call__(self, func)`, which should optimize the black box function `func` using `self.budget` function evaluations.
+The func() can only be called as many times as the budget allows, not more. Each of the optimization functions has a search space between -5.0 (lower bound) and 5.0 (upper bound). The dimensionality can be varied.
+As an expert of numpy, scipy, scikit-learn, torch, gpytorch, you are allowed to use these libraries. Do not use any other libraries unless they cannot be replaced by the above libraries.  Do not remove the comments from the code.
+Name the class based on the characteristics of the algorithm with a template '<characteristics>BO'.
+The algorithm must be reproducible: the evaluator calls np.random.seed(seed) and torch.manual_seed(seed) before each run. Every other random generator must be created from np.random, e.g. `self.rng = np.random.default_rng(np.random.randint(2**31 - 1))`, and passed on explicitly, e.g. `qmc.Sobol(d=dim, scramble=True, seed=self.rng)`, `qmc.LatinHypercube(d=dim, seed=self.rng)`, `GaussianProcessRegressor(..., random_state=int(self.rng.integers(2**31 - 1)))`. Never create an unseeded generator.
+Each candidate is run 10 times in parallel, one CPU core per run, and is stopped and counted as failed if the runs take longer than 120 seconds. Keep the cost per iteration small (e.g. few optimizer restarts for the GP hyperparameters and the acquisition function). The algorithm will later also be run with a budget of 600 evaluations, so it must work for any budget and its cost should grow moderately with the number of evaluated points.
+
+Give an excellent, novel and computationally efficient Bayesian Optimization algorithm to solve this task, give it a concise but comprehensive key-word-style description with the main ideas and justify your decision about the algorithm.
+
+The current population of algorithms already evaluated(name, score, runtime and description):
+- EfficientBayesianOptimizationBO: 0.3334, 41.21 seconds, **EfficientBayesianOptimizationBO**: This is a novel Bayesian optimization algorithm that combines multiple strategies to achieve superior performance on black-box optimization problems. Key features include: 1) A hybrid initialization strategy using Latin Hypercube Sampling combined with a simple heuristic for better exploration, 2) An improved acquisition function based on Expected Improvement with a novel adaptive exploration-exploitation balance, 3) A sophisticated selection mechanism that uses a combination of local search and evolutionary strategies to efficiently optimize the acquisition function, 4) Efficient surrogate model management with automatic hyperparameter tuning using a small number of restarts, and 5) Adaptive batch size selection based on remaining budget to maximize information gain.
+
+
+- EfficientBO: 0.3262, 16.28 seconds, **Efficient Bayesian Optimization with Adaptive Model Selection and Multi-Start Acquisition**
+
+This novel Bayesian optimization algorithm combines several advanced techniques to achieve superior performance on black-box optimization problems like BBOB function 8 (Rosenbrock). Key features include:
+
+1. **Adaptive Model Selection**: Dynamically switches between different surrogate models (Gaussian Process with Matérn kernel and Linear Model) based on problem characteristics
+2. **Multi-Start Acquisition Optimization**: Uses multiple restarts with different sampling strategies to efficiently optimize the acquisition function 
+3. **Efficient Batch Selection**: Implements a hybrid approach that balances exploration and exploitation using EI acquisition with adaptive parameters
+4. **Budget-Aware Strategy**: Adapts the number of initial points and model updates based on available budget
+
+
+- EfficientBayesianOptimizationBO: 0.3128, 61.47 seconds, **EfficientBayesianOptimizationBO**: A novel Bayesian optimization algorithm that combines a multi-start local search with a progressive refinement strategy. It uses a sparse Gaussian process model with active learning to efficiently explore the search space, employs an improved Expected Improvement acquisition function with adaptive parameters, and incorporates a hybrid selection strategy that balances exploration and exploitation. The algorithm features a budget-aware initialization and progressive refinement of the surrogate model to maintain computational efficiency across different budget constraints.
+
+
+- EfficientBayesianOptimizationBO: 0.0000, 0.00 seconds, **EfficientBayesianOptimizationBO**: This is a novel Bayesian optimization algorithm that combines multiple strategies for efficient black-box optimization. Key features include: (1) A hybrid initialization strategy using Latin Hypercube Sampling combined with a small random sample to ensure good coverage of the search space; (2) An improved Expected Improvement acquisition function with adaptive exploration-exploitation trade-off; (3) A multi-start optimization approach for acquisition function maximization using both local and global methods; (4) Efficient model updating with selective retraining; (5) Adaptive batch size that decreases as the budget is consumed to maintain computational efficiency.
+
+
+
+
+The selected solution to update is:
+**EfficientBayesianOptimizationBO**: This is a novel Bayesian optimization algorithm that combines multiple strategies to achieve superior performance on black-box optimization problems. Key features include: 1) A hybrid initialization strategy using Latin Hypercube Sampling combined with a simple heuristic for better exploration, 2) An improved acquisition function based on Expected Improvement with a novel adaptive exploration-exploitation balance, 3) A sophisticated selection mechanism that uses a combination of local search and evolutionary strategies to efficiently optimize the acquisition function, 4) Efficient surrogate model management with automatic hyperparameter tuning using a small number of restarts, and 5) Adaptive batch size selection based on remaining budget to maximize information gain.
+
+
+With code:
+```python
+from collections.abc import Callable
+from scipy.stats import qmc #If you are using QMC sampling, qmc from scipy is encouraged. Remove this line if you have better alternatives.
+from scipy.stats import norm
+import numpy as np
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import Matern, ConstantKernel as C
+import warnings
+warnings.filterwarnings('ignore')
+
+class EfficientBayesianOptimizationBO:
+    def __init__(self, budget: int, dim: int):
+        self.budget = budget
+        self.dim = dim
+        # bounds has shape (2,<dimension>), bounds[0]: lower bound, bounds[1]: upper bound
+        self.bounds = np.array([[-5.0]*dim, [5.0]*dim])
+        # X has shape (n_points, n_dims), y has shape (n_points, 1)
+        self.X: np.ndarray = None
+        self.y: np.ndarray = None
+        self.n_evals = 0 # the number of function evaluations
+        self.n_init = max(10, min(20, int(np.ceil(np.sqrt(self.dim) * 5))))
+        
+        # For reproducibility
+        self.rng = np.random.default_rng(np.random.randint(2**31 - 1))
+        
+        # Algorithm parameters
+        self.acq_func_type = "ei"  # Expected Improvement
+        self.n_restarts = 5  # Number of restarts for acquisition function optimization
+        self.batch_size = 1  # Initial batch size
+        
+    def _sample_points(self, n_points):
+        # Use Latin Hypercube Sampling for good space coverage
+        sampler = qmc.LatinHypercube(d=self.dim, seed=self.rng)
+        points = sampler.random(n=n_points)
+        # Scale to bounds
+        points = self.bounds[0] + points * (self.bounds[1] - self.bounds[0])
+        return points
+    
+    def _fit_model(self, X, y):
+        # Fit Gaussian Process with Matern kernel
+        # Use a small number of restarts for efficiency
+        kernel = C(1.0, (1e-5, 1e5)) * Matern(length_scale=1.0, length_scale_bounds=(1e-4, 1e2), nu=2.5)
+        
+        # Use a subset of data points if too many to avoid numerical issues
+        max_samples = min(1000, X.shape[0])
+        if X.shape[0] > max_samples:
+            indices = self.rng.choice(X.shape[0], max_samples, replace=False)
+            X_subset = X[indices]
+            y_subset = y[indices]
+        else:
+            X_subset = X
+            y_subset = y
+            
+        gp = GaussianProcessRegressor(
+            kernel=kernel,
+            n_restarts_optimizer=self.n_restarts,
+            alpha=1e-6,
+            normalize_y=True,
+            random_state=int(self.rng.integers(2**31 - 1))
+        )
+        
+        gp.fit(X_subset, y_subset)
+        return gp
+    
+    def _acquisition_function(self, X):
+        # Expected Improvement with adaptive exploration
+        if self.y is None or self.X is None:
+            return np.ones((X.shape[0], 1)) * 1e-8
+            
+        # Get the best observed value so far (lower is better for minimization)
+        best_y = np.min(self.y)
+        
+        # Fit GP model
+        gp = self._fit_model(self.X, self.y)
+        
+        # Predict mean and std at candidate points
+        mu, sigma = gp.predict(X, return_std=True)
+        
+        # Avoid numerical issues with zero std
+        sigma = np.maximum(sigma, 1e-8)
+        
+        # Expected Improvement calculation
+        improvement = best_y - mu
+        z = improvement / sigma
+        ei = improvement * norm.cdf(z) + sigma * norm.pdf(z)
+        
+        # Apply adaptive factor to control exploration/exploitation balance
+        # In early iterations, favor exploration; later, exploit more
+        exploitation_factor = max(0.1, 1.0 - (self.n_evals / self.budget) * 0.8)
+        ei *= exploitation_factor
+        
+        return ei.reshape(-1, 1)
+    
+    def _select_next_points(self, batch_size):
+        # Use a hybrid strategy to optimize acquisition function
+        # Start with multiple random initial points for better exploration
+        n_candidates = max(50, batch_size * 20)
+        
+        # Sample candidates using LHS
+        candidates = self._sample_points(n_candidates)
+        
+        # Evaluate acquisition function for all candidates
+        acq_values = self._acquisition_function(candidates)
+        
+        # Select top candidates based on acquisition value
+        top_indices = np.argsort(acq_values.flatten())[-batch_size:][::-1]
+        selected_points = candidates[top_indices]
+        
+        return selected_points
+    
+    def _evaluate_points(self, func, X):
+        # Evaluate the points in X
+        # func: takes array of shape (n_dims,) and returns np.float64.
+        # return array of shape (n_points, 1)
+        
+        if X is None or len(X) == 0:
+            return np.array([])
+            
+        y_values = []
+        for x in X:
+            y_values.append(func(x))
+            
+        self.n_evals += len(X)
+        return np.array(y_values).reshape(-1, 1)
+    
+    def _update_eval_points(self, new_X, new_y):
+        # Update self.X and self.y
+        if self.X is None:
+            self.X = new_X.copy()
+            self.y = new_y.copy()
+        else:
+            self.X = np.vstack([self.X, new_X])
+            self.y = np.vstack([self.y, new_y])
+    
+    def __call__(self, func: Callable[[np.ndarray], np.float64]) -> tuple[np.float64, np.array]:
+        # Main minimize optimization loop
+        # func: takes array of shape (n_dims,) and returns np.float64. 
+        # !!! Do not call func directly. Use _evaluate_points instead and be aware of the budget when calling it. !!!
+        # Return a tuple (best_y, best_x)
+        
+        # Initialize with random points
+        init_points = self._sample_points(self.n_init)
+        init_values = self._evaluate_points(func, init_points)
+        self._update_eval_points(init_points, init_values)
+        
+        # Adaptive batch size adjustment
+        if self.budget > 200:
+            self.batch_size = min(5, max(1, int(np.ceil((self.budget - self.n_evals) / 50))))
+        else:
+            self.batch_size = 1
+            
+        # Main optimization loop
+        while self.n_evals < self.budget and self.n_evals + self.batch_size <= self.budget:
+            # If we have enough points, fit the model and optimize acquisition function
+            if self.X.shape[0] > 1:
+                # Select next batch of points to evaluate
+                next_batch = self._select_next_points(self.batch_size)
+                
+                # Evaluate the batch
+                batch_values = self._evaluate_points(func, next_batch)
+                
+                # Update the evaluation history
+                self._update_eval_points(next_batch, batch_values)
+                
+                # Update batch size based on remaining budget
+                if self.budget > 200:
+                    self.batch_size = min(5, max(1, int(np.ceil((self.budget - self.n_evals) / 50))))
+            else:
+                # If we don't have enough points, evaluate more initial points
+                remaining_budget = self.budget - self.n_evals
+                if remaining_budget > 0:
+                    additional_points = self._sample_points(min(remaining_budget, 10))
+                    additional_values = self._evaluate_points(func, additional_points)
+                    self._update_eval_points(additional_points, additional_values)
+        
+        # Return best point found
+        best_idx = np.argmin(self.y)
+        best_y = float(self.y[best_idx])
+        best_x = self.X[best_idx].copy()
+        
+        return best_y, best_x
+
+```
+The algorithm EfficientBayesianOptimizationBO got an average Area over the convergence curve (AOCC, 1.0 is the best) score of 0.3334 with standard deviation 0.0097.
+
+took 41.21 seconds to run.
+
+Refine the strategy of the selected solution to improve it.
+
+
+
+Give the response in the format:
+# Description 
+<description>
+# Justification 
+<justification for the key components of the algorithm or the changes made>
+# Code 
+<code>
+

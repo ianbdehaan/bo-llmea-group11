@@ -71,6 +71,17 @@ class BaselinePromptGenerator(PromptGenerator):
         self.is_bo = False
         self.use_mini_bo = False
         self.problem_desc = "24 noiseless functions"
+        # Group 11 change: the evaluator seeds np.random (and torch) before every run. Generated code
+        # that creates its own generators without a seed (e.g. qmc.Sobol(scramble=True)) is not
+        # reproducible, so we ask the LLM to derive every generator from np.random.
+        # Group 11 change: limits on the run time (set in stage1_run.py from configs.yaml)
+        self.runtime_prompt = ""
+        self.reproducibility_prompt = (
+            "The algorithm must be reproducible: the evaluator calls np.random.seed(seed) and torch.manual_seed(seed) before each run. "
+            "Every other random generator must be created from np.random, e.g. `self.rng = np.random.default_rng(np.random.randint(2**31 - 1))`, "
+            "and passed on explicitly, e.g. `qmc.Sobol(d=dim, scramble=True, seed=self.rng)`, `qmc.LatinHypercube(d=dim, seed=self.rng)`, "
+            "`GaussianProcessRegressor(..., random_state=int(self.rng.integers(2**31 - 1)))`. Never create an unseeded generator."
+        )
 
     def __str__(self):
         suffix = ""
@@ -180,10 +191,12 @@ class BaselinePromptGenerator(PromptGenerator):
             lib_prompt = "As an expert of numpy, scipy, scikit-learn, torch, gpytorch, you are allowed to use these libraries, and using GPU for acceleration is mandatory."
         # problem_desc = "one noiseless functions:f6-Attractive Sector Function"
         task_prompt = f"""
-The optimization algorithm should handle a wide range of tasks, which is evaluated on the BBOB test suite of {self.problem_desc}. Your task is to write the optimization algorithm in Python code. The code should contain an `__init__(self, budget, dim)` function and the function `__call__(self, func)`, which should optimize the black box function `func` using `self.budget` function evaluations.
+The optimization algorithm is evaluated on {self.problem_desc}. Your task is to write the optimization algorithm in Python code. The code should contain an `__init__(self, budget, dim)` function and the function `__call__(self, func)`, which should optimize the black box function `func` using `self.budget` function evaluations.
 The func() can only be called as many times as the budget allows, not more. Each of the optimization functions has a search space between -5.0 (lower bound) and 5.0 (upper bound). The dimensionality can be varied.
 {lib_prompt} Do not use any other libraries unless they cannot be replaced by the above libraries.  Do not remove the comments from the code.
 Name the class based on the characteristics of the algorithm with a template '<characteristics>BO'.
+{self.reproducibility_prompt}
+{self.runtime_prompt}
 
 Give an excellent, novel and computationally efficient Bayesian Optimization algorithm to solve this task, give it a concise but comprehensive key-word-style description with the main ideas and justify your decision about the algorithm.
 """

@@ -1,0 +1,7 @@
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+NovelBayesianOptimizationBO on problem 8, seed 110: reproducible (final best 207.44 vs 207.44)
+NovelBayesianOptimizationBO on problem 1124, seed 110: reproducible (final best 7.87174 vs 7.87174)
+AEBO_SB on problem 8, seed 110: reproducible (final best 988.421 vs 988.421)
+AEBO_SB on problem 1124, seed 110: reproducible (final best 4.57298 vs 4.57298)
+All algorithms reproducible.

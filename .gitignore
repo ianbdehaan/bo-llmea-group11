@@ -1,0 +1,9 @@
+# python
+__pycache__/
+*.pyc
+.venv/
+# secrets
+.env
+# plot caches (the logs/ folder is kept, it documents the runs)
+outputs/convergence_analysis/stage1_*/cached_*_df.pkl
+outputs/**/*.tmp

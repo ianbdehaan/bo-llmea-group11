@@ -59,7 +59,7 @@ numpy is pinned to 2.3.5: from numpy 2.4 on, `float()` of an array with shape `(
 
 ## 3. Configure the LLM
 
-We use **Qwen3-Coder-30B-A3B-Instruct** (open weights, free) served locally with Ollama: the Ollama model `qwen3-coder:latest`, a mixture of experts model with 30.5B parameters (3.3B active), quantized to Q4_K_M (≈19 GB; with a 32K context it needs ≈22 GB of GPU memory). No api key is needed and there are no rate limits.
+We use **Qwen3-Coder-30B-A3B-Instruct** (open weights, free) served locally with Ollama: the Ollama model `qwen3-coder:latest`, a mixture of experts model with 30.5B parameters (3.3B active), quantized to Q4_K_M (≈19 GB; with a 32K context it needs ≈22 GB of GPU memory). No api key is needed and there are no rate limits. We chose it because it is free and open weight (as the assignment requires), specialised for code, answers without long hidden reasoning (so the answer is not cut off before the code, unlike reasoning models with a token limit), and fast enough on one RTX 3090 (≈ 85 tokens/s) to run both searches within a few hours; it was released in July 2025, so newer models exist, but the choice was limited to models that run locally on the available hardware.
 
 ```bash
 # on the machine with the GPU (https://ollama.com/download)

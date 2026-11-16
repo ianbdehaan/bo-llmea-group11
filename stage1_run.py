@@ -11,8 +11,6 @@ import pickle
 import argparse
 from pathlib import Path
 import yaml
-from dotenv import load_dotenv
-load_dotenv()
 import logging
 from llamevol.evaluator.ioh_evaluator import IOHEvaluator
 from llamevol.prompt_generators import BaselinePromptGenerator
@@ -89,7 +87,7 @@ def run_stage1_for_target(target_name, problem_id, instance_id, problem_desc, cf
     )
 
     # 3. LLM
-    llm_manager = LLMmanager(model_key=llm_cfg['model_key'])
+    llm_manager = LLMmanager(model_name=llm_cfg['model_name'], base_url=llm_cfg['ollama_url'], num_ctx=llm_cfg['num_ctx'])
     llm_manager.max_api_retries = llm_cfg['max_api_retries']
     llm_manager.max_wait_seconds = llm_cfg['max_wait_seconds']
 
@@ -113,8 +111,6 @@ def run_stage1_for_target(target_name, problem_id, instance_id, problem_desc, cf
         'max_tokens': llm_cfg['max_tokens'],
         'timeout': llm_cfg['timeout_seconds'],
     }
-    if llm_cfg.get('reasoning_effort'):
-        llm_params['reasoning_effort'] = llm_cfg['reasoning_effort']
 
     LLaMEvol().run_evolutions(
         llm=llm_manager,
@@ -162,11 +158,6 @@ def main():
 
     with open(args.config, 'r', encoding='utf-8') as f:
         cfg = yaml.safe_load(f)
-
-    # the api key name depends on the provider, e.g. GROQ_API_KEY or CEREBRAS_API_KEY
-    key_name = cfg['stage1_generation']['llm']['api_key_env']
-    if key_name and not os.getenv(key_name):
-        raise EnvironmentError(f'{key_name} is missing, put it in the .env file.')
 
     if args.target in ('bbob', 'both'):
         bbob_cfg = cfg['targets']['bbob']

@@ -21,7 +21,6 @@ This repository contains the implementation and evaluation for the **Bayesian Op
 ├── check_reproducibility.py   # runs each best algorithm twice with the same seed and compares
 ├── run_analysis_plots.py      # stage 1 AOCC plots and stage 2 convergence plots
 ├── requirements.txt           # exact package versions
-├── .env.example               # template for api keys (only needed for an api based LLM)
 ├── llamevol/                  # LLaMEA-BO framework (adapted, see section 6)
 ├── misc/                      # AOCC helpers from LLaMEA-BO
 ├── analysis/                  # plotting helpers from LLaMEA-BO
@@ -33,8 +32,7 @@ This repository contains the implementation and evaluation for the **Bayesian Op
     ├── real_world_1124/       # stage 1 search on problem 1124: same structure
     ├── stage2_benchmark/      # stage 2: one csv per run (runs/), combined csv, final summary
     │                          # (runs_time_limited_1h/: first attempt with a 1 h limit, see 10.3)
-    ├── convergence_analysis/  # all figures
-    └── old_run_2026-11-09/    # our first, failed attempt (kept for transparency, see section 6)
+    └── convergence_analysis/  # all figures
 ```
 
 Each stage 1 search folder `outputs/<target>/ESPopulation_<name>_<timestamp>/` contains for every candidate `<generation>-<index>_<name>_<AOCC>.py` (code), `_prompt.md` (system prompt + prompt), `_respond.md` (LLM answer + evaluation feedback or error) and `_handler.pkl`, plus `history.jsonl` with one line per candidate (generation, parents, prompt, response, code, error, AOCC of each of the 10 runs, run time, token counts) and the final population pickle.
@@ -53,35 +51,23 @@ pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requiremen
 
 With `uv` this is `uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python --index-strategy unsafe-best-match --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt`.
 
-`Practical_Problems/` is included in the repository, so it is not installed from GitHub (the old requirement pointed at a moving branch zip with a fixed hash, which no longer installs).
+`Practical_Problems/` is included in the repository (from https://github.com/BayesOptApp/Practical_Problems), so it is not installed separately.
 
-numpy is pinned to 2.3.5 and not 2.4: numpy 2.4 turned `float(array_of_shape_(1,))` into a `TypeError`, and generated code does this all the time (the template stores `y` with shape `(n, 1)`, so `float(self.y[i])`). With numpy 2.4 most candidates of our first test crashed on this line; with 2.3 it is only a deprecation warning.
+numpy is pinned to 2.3.5: from numpy 2.4 on, `float()` of an array with shape `(1,)` raises a `TypeError`, and generated code does this very often (the code template stores `y` with shape `(n, 1)`, so `float(self.y[i])`); with 2.3 it is only a deprecation warning.
 
 **CPU / GPU.** The implementation runs fully on CPUs. `stage2_benchmark.py` hides the GPU (`CUDA_VISIBLE_DEVICES=""`) because the provided BoTorch baseline selects the device `cuda:3` whenever a GPU is visible, which crashes on machines with fewer than four GPUs; for GPs with at most 600 points the CPU is fast enough. With the CPU build of torch, `torch.cuda.is_available()` is `False`, so the stage 1 prompt does not ask the LLM for GPU code either. The only hardware specific part is the LLM server (section 3).
 
-## 3. Configure the LLM provider
+## 3. Configure the LLM
 
-The LLM is selected with `stage1_generation.llm.model_key` in `configs.yaml`, which is a key of the `LLMS` dictionary in `llamevol/llm.py`.
-
-**Used setting: local model with Ollama (free, no rate limits).** We use `ollama/qwen3-coder`, i.e. the Ollama model `qwen3-coder:latest` = Qwen3-Coder-30B-A3B-Instruct, a mixture of experts model with 30.5B parameters (3.3B active), quantized to Q4_K_M (≈19 GB, plus the context it needs ≈22 GB of GPU memory).
+We use **Qwen3-Coder-30B-A3B-Instruct** (open weights, free) served locally with Ollama: the Ollama model `qwen3-coder:latest`, a mixture of experts model with 30.5B parameters (3.3B active), quantized to Q4_K_M (≈19 GB; with a 32K context it needs ≈22 GB of GPU memory). No api key is needed and there are no rate limits.
 
 ```bash
-# on the machine with the GPU (ollama.com/download)
+# on the machine with the GPU (https://ollama.com/download)
 ollama pull qwen3-coder
 ollama serve            # usually already running as a service on localhost:11434
 ```
 
-The client talks to the native Ollama api (`/api/chat`) and sets the context length explicitly (`OLLAMA_NUM_CTX`, default 32768), because the OpenAI compatible endpoint of Ollama silently uses a short default context. The server address can be changed with `OLLAMA_URL` (default `http://localhost:11434`).
-
-**Api based alternatives.** Set `model_key` and `api_key_env` in `configs.yaml` and put the key in `.env` (copy `.env.example`):
-
-| `model_key` | provider | `api_key_env` |
-|:---|:---|:---|
-| `ollama/qwen3-coder` (used) | local Ollama | `null` |
-| `cerebras/gpt-oss-120b` | Cerebras free tier | `CEREBRAS_API_KEY` |
-| `openai/gpt-oss-120b` | Groq free tier | `GROQ_API_KEY` |
-
-For the reasoning model gpt-oss set `reasoning_effort` (e.g. `"medium"`), since its reasoning tokens count towards `max_tokens`. Note that the Groq free tier for gpt-oss-120b allows about 200K tokens per day, while one search of 100 candidates needs roughly 0.5–1M tokens; this is why our first attempt failed (section 6).
+The model is configured in `configs.yaml` under `stage1_generation.llm`: `model_name` (Ollama model name), `ollama_url` (server address) and `num_ctx` (context length). `llamevol/llm.py` talks to the native Ollama api (`/api/chat`) and passes the context length explicitly, because the OpenAI compatible endpoint of Ollama silently uses a short default context and would cut long prompts. Any other model available in Ollama can be used by changing `model_name`.
 
 ## 4. Running the experiments
 
@@ -135,10 +121,10 @@ All settings are in `configs.yaml`:
 | stage1_generation | `eval_timeout_seconds` | 120 | a candidate whose 10 runs take longer fails |
 | population | `n_parent`, `n_offspring`, `use_elitism` | 4, 12, true | (4 + 12) elitist ES of LLaMEA-BO |
 | population | `n_retry` | 3 | re-prompts if the answer contains no code |
-| llm | `model_key` | `ollama/qwen3-coder` | see section 3 |
+| llm | `model_name`, `ollama_url`, `num_ctx` | `qwen3-coder:latest`, `http://localhost:11434`, 32768 | see section 3 |
 | llm | `temperature` | 0.8 | sampling temperature |
 | llm | `max_tokens` | 16384 | max generated tokens per answer |
-| llm | `timeout_seconds`, `max_api_retries`, `max_wait_seconds` | 900, 30, 3600 | request timeout and retry/backoff on api errors |
+| llm | `timeout_seconds`, `max_api_retries`, `max_wait_seconds` | 900, 30, 3600 | request timeout and retry/backoff of failed requests |
 | stage2_generalization | `evaluation_budget` | 600 | evaluations per run (100·d), including the initial design |
 | stage2_generalization | `workers` | 40 | parallel runs |
 | stage2_generalization | `run_time_limit_seconds` | 10800 | safety limit: a generated algorithm run is stopped after 3 h (status in the csv); no final run reached it |
@@ -159,16 +145,16 @@ with the trapezoidal rule over the evaluations (1 is best). The fitness of a can
 
 The `llamevol/` package is LLaMEA-BO (see credits). All our changes are marked with `# Group 11 change` in the code.
 
-1. **Retry with backoff on api errors** (`llamevol/llm.py`, `LLMmanager.chat`). Originally an api error (e.g. a rate limit) was returned at once and the candidate became an empty, failed candidate. Our first attempt (`outputs/old_run_2026-11-09/`, Groq gpt-oss-120b, max_tokens 4096) lost 98 of 100 real-world candidates and 72 of 100 BBOB candidates this way: all three tries got 0 answer tokens. Now errors are retried, waiting the time suggested by the server or with exponential backoff.
-2. **Reason of every failed try in the logs** (`llamevol/llamevol.py`). The api error or the finish reason (e.g. `length` when `max_tokens` is used up) is stored in the error of the candidate, so it appears in `_respond.md` and `history.jsonl`.
+1. **LLM client** (`llamevol/llm.py`). The original file has clients for many api providers; we replaced them with a single client for the native Ollama api that sets the context length explicitly. A failed request (server busy, timeout) was originally returned at once and the candidate became an empty, failed candidate; now it is retried with exponential backoff, so only real answers of the LLM count as candidates.
+2. **Reason of every failed try in the logs** (`llamevol/llamevol.py`). The request error or the finish reason (e.g. `length` when `max_tokens` is used up) is stored in the error of the candidate, so it appears in `_respond.md` and `history.jsonl`.
 3. **Complete search history** (`population.py`). Every candidate is appended to `history.jsonl`, and the population is checkpointed after every generation so a search can be resumed (`stage1_run.py` moves the files of an unfinished generation to `discarded_unfinished_generation/`).
 4. **Budget check** (`ioh_evaluator.py`). The over-budget check used `> budget`, which allowed 61 evaluations in a 60 evaluation run; now `>= budget`.
 5. **Timeout really stops a candidate** (`ioh_evaluator.py`). After a timeout the executor waited for the running processes, so a hanging candidate blocked the search. Now the worker processes are terminated. Together with `eval_timeout_seconds` this keeps one search at a few hours.
 6. **Parallel evaluation in processes** (`stage1_run.py`). The 10 runs of a candidate run in 10 processes (threads would share the global `np.random` state that is seeded per run).
-7. **Reproducibility rule in the prompt** (`reproducibility_prompt`). The evaluator seeds `np.random` and `torch` before each run, but generated code often creates unseeded generators (e.g. `qmc.Sobol(scramble=True)`), which made the results of our first attempt non-reproducible (`check_reproducibility.py` showed different results for the same seed). The prompt now asks to derive every generator from `np.random`.
+7. **Reproducibility rule in the prompt** (`reproducibility_prompt`). The evaluator seeds `np.random` and `torch` before each run, but generated code often creates unseeded generators (e.g. `qmc.Sobol(scramble=True)`), so the same seed gave different results. The prompt now asks to derive every generator from `np.random`; `check_reproducibility.py` confirms that both best algorithms are reproducible.
 8. **Run time rule in the prompt** (`runtime_prompt`). Tells the LLM about the timeout and that the algorithm is later run with 600 evaluations, so it should not become too expensive per iteration.
 9. **Problem description.** The original prompt said "evaluated on the BBOB test suite of ..." also for the real-world problem; it now uses the description from `configs.yaml`.
-10. **LLM clients.** Added a native Ollama client (explicit context length) and entries for local models and Cerebras.
+10. **Real-world problems and seeds in the evaluator** (`ioh_evaluator.py`). LLaMEA-BO only supports BBOB functions; problem ids ≥ 1000 now load the practical problem from `Practical_Problems/`, dimension 6 is allowed, and every run seeds `np.random` and `torch` with its own seed (110–119) instead of using unseeded runs.
 
 ## 7. Randomness and reproducibility
 

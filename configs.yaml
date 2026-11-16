@@ -28,16 +28,14 @@ stage1_generation:
     use_elitism: true        # (4 + 12) selection
     n_retry: 3               # re-prompts when the answer contains no code
   llm:
-    # model_key is a key of the LLMS dict in llamevol/llm.py. We use Qwen3-Coder-30B-A3B-Instruct
-    # (open weights, Q4_K_M) served by Ollama on the machine itself (free, no rate limits).
-    # Other options: "cerebras/gpt-oss-120b" (needs CEREBRAS_API_KEY), "openai/gpt-oss-120b" (Groq, GROQ_API_KEY)
-    model_key: "ollama/qwen3-coder"
-    api_key_env: null        # name of the env variable with the api key, null for a local model
+    # Qwen3-Coder-30B-A3B-Instruct (open weights, Q4_K_M) served by Ollama on the machine itself
+    model_name: "qwen3-coder:latest"
+    ollama_url: "http://localhost:11434"
+    num_ctx: 32768           # context length in tokens (prompt + answer)
     temperature: 0.8
     max_tokens: 16384        # max generated tokens per answer
-    reasoning_effort: null   # only for reasoning models such as gpt-oss ("low", "medium", "high")
     timeout_seconds: 900     # per request
-    max_api_retries: 30      # retries of a request when the api returns an error (e.g. rate limit)
+    max_api_retries: 30      # retries of a failed request (exponential backoff)
     max_wait_seconds: 3600   # longest wait between two retries
 
 stage2_generalization:

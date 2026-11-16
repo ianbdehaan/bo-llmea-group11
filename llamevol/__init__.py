@@ -5,4 +5,4 @@ from .individual import Individual
 from .llamevol import LLaMEvol
 from .utils import NoCodeException
 from .evaluator.bo_injector import AlgorithmCritic
-from .llm import LLMmanager, LLMS
+from .llm import LLMmanager

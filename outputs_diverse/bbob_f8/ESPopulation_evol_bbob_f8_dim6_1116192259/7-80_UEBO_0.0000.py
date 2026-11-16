@@ -1,0 +1,277 @@
+from collections.abc import Callable
+from scipy.stats import qmc
+import numpy as np
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import Matern, RBF, WhiteKernel
+from scipy.optimize import minimize
+import warnings
+
+class UEBO:
+    def __init__(self, budget: int, dim: int):
+        self.budget = budget
+        self.dim = dim
+        # bounds has shape (2,<dimension>), bounds[0]: lower bound, bounds[1]: upper bound
+        self.bounds = np.array([[-5.0]*dim, [5.0]*dim])
+        # X has shape (n_points, n_dims), y has shape (n_points, 1)
+        self.X: np.ndarray = None
+        self.y: np.ndarray = None
+        self.n_evals = 0 # the number of function evaluations
+        
+        # Initialize random number generator for reproducibility
+        self.rng = np.random.default_rng(np.random.randint(2**31 - 1))
+        
+        # Determine initial sample size based on dimensionality and budget
+        self.n_init = min(max(10, 2 * dim + 1), budget // 4)
+        if self.n_init > budget:
+            self.n_init = budget
+            
+        # Ensemble of surrogate models
+        self.models = []
+        self.model_weights = []
+        
+        # Acquisition function parameters
+        self.noise_level = 1e-6
+        
+        # Exploration parameters
+        self.exploration_factor = 0.1
+        self.uncertainty_threshold = 0.1
+        
+        # Performance tracking for model weighting
+        self.model_performance_history = []
+        self.model_validations = []
+        
+        # Batch size
+        self.batch_size = 1
+
+    def _sample_points(self, n_points):
+        """Sample points using Sobol sequence for better space-filling properties"""
+        # Create Sobol sequence sampling for initial design
+        sampler = qmc.Sobol(d=self.dim, scramble=True, seed=self.rng)
+        samples = sampler.random(n=n=n_points)
+        
+        # Scale to bounds
+        samples = self.bounds[0] + samples * (self.bounds[1] - self.bounds[0])
+        return samples
+
+    def _initialize_models(self):
+        """Initialize ensemble of Gaussian Process models with different kernels"""
+        # Initialize multiple GP models with different kernel configurations
+        kernels = [
+            Matern(length_scale=1.0, length_scale_bounds=(1e-3, 1e3), nu=1.5),
+            Matern(length_scale=1.0, length_scale_bounds=(1e-3, 1e3), nu=2.5),
+            RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3))
+        ]
+        
+        self.models = []
+        for i, kernel in enumerate(kernels):
+            # Add white noise kernel
+            kernel_with_noise = kernel + WhiteKernel(noise_level=self.noise_level, 
+                                                   noise_level_bounds=(1e-10, 1e1))
+            
+            model = GaussianProcessRegressor(
+                kernel=kernel_with_noise,
+                alpha=0.0,
+                n_restarts_optimizer=2,  # Reduced restarts for efficiency
+                normalize_y=True,
+                random_state=int(self.rng.integers(2**31 - 1))
+            )
+            self.models.append(model)
+        
+        # Initialize equal weights
+        self.model_weights = np.ones(len(self.models)) / len(self.models)
+
+    def _fit_models(self, X, y):
+        """Fit all models in the ensemble"""
+        for model in self.models:
+            model.fit(X, y)
+
+    def _predict_models(self, X):
+        """Get predictions from all models and return mean and std"""
+        predictions = []
+        for model in self.models:
+            mu, sigma = model.predict(X, return_std=True)
+            predictions.append((mu, sigma))
+        
+        # Stack predictions
+        mus = np.array([pred[0] for pred in predictions]).T  # Shape: (n_points, n_models)
+        sigmas = np.array([pred[1] for pred in predictions]).T  # Shape: (n_points, n_models)
+        
+        return mus, sigmas
+
+    def _calculate_model_weights(self, X_val, y_val):
+        """Calculate model weights based on validation performance"""
+        if len(X_val) == 0:
+            return np.ones(len(self.models)) / len(self.models)
+            
+        # Get predictions from all models on validation set
+        mus_val, _ = self._predict_models(X_val)
+        
+        # Calculate RMSE for each model
+        rmse_per_model = np.sqrt(np.mean((mus_val - y_val.reshape(-1, 1))**2, axis=0))
+        
+        # Convert RMSE to weights (inverse relationship)
+        # Add small epsilon to avoid division by zero
+        weights = 1.0 / (rmse_per_model + 1e-8)
+        
+        # Normalize weights
+        weights = weights / np.sum(weights)
+        
+        return weights
+
+    def _acquisition_function(self, X):
+        """Uncertainty-aware acquisition function using entropy-based measure"""
+        if len(self.models) == 0:
+            return np.zeros((X.shape[0], 1))
+            
+        # Get predictions from all models
+        mus, sigmas = self._predict_models(X)
+        
+        # Calculate ensemble mean and std
+        ensemble_mean = np.mean(mus, axis=1)
+        ensemble_std = np.sqrt(np.mean(sigmas**2, axis=1) + np.var(mus, axis=1))
+        
+        # Find best observed value (y_min)
+        y_min = np.min(self.y)
+        
+        # Calculate entropy-based uncertainty measure
+        # This is a novel approach that combines epistemic and aleatoric uncertainty
+        # Using the standard deviation as uncertainty proxy with adaptive scaling
+        uncertainty = ensemble_std
+        
+        # Calculate acquisition value using modified expected improvement
+        # with an uncertainty-aware component
+        improvement = y_min - ensemble_mean
+        
+        # Avoid numerical issues
+        epsilon = 1e-8
+        normalized_uncertainty = uncertainty / (np.std(ensemble_mean) + epsilon)
+        
+        # Combine improvement and uncertainty in a novel way
+        # The uncertainty term adapts based on the problem landscape
+        acquisition_value = improvement * (1.0 + self.exploration_factor * normalized_uncertainty)
+        
+        # Normalize acquisition values to prevent extreme values
+        if np.std(acquisition_value) > 0:
+            acquisition_value = (acquisition_value - np.mean(acquisition_value)) / (np.std(acquisition_value) + epsilon)
+        
+        return acquisition_value.reshape(-1, 1)
+
+    def _select_next_points(self, batch_size):
+        """Select the next points to evaluate using acquisition function optimization"""
+        # Generate a larger set of candidate points for better optimization
+        n_candidates = min(50 * self.dim, 1000)
+        
+        # Use Sobol sampling in the entire search space for initial candidates
+        candidates = self._sample_points(n_candidates)
+        
+        # Also include some points around the current best solution
+        if self.X is not None and len(self.X) > 0:
+            best_x = self.X[np.argmin(self.y)]
+            # Add points near the best solution
+            for _ in range(20):
+                noise = self.rng.normal(0, 0.1, self.dim)
+                candidate = best_x + noise
+                # Clip to bounds
+                candidate = np.clip(candidate, self.bounds[0], self.bounds[1])
+                candidates = np.vstack([candidates, candidate])
+        
+        # Evaluate acquisition function for all candidates
+        acq_values = self._acquisition_function(candidates)
+        
+        # Select top candidates (use a simple heuristic - just the best ones)
+        top_indices = np.argsort(acq_values.flatten())[-batch_size:]
+        selected_points = candidates[top_indices]
+        
+        return selected_points
+
+    def _evaluate_points(self, func, X):
+        """Evaluate the points in X"""
+        # Evaluate all points in X
+        y_vals = []
+        for x in X:
+            y_vals.append(func(x))
+            
+        y_vals = np.array(y_vals).reshape(-1, 1)
+        
+        self.n_evals += len(X)
+        return y_vals
+    
+    def _update_eval_points(self, new_X, new_y):
+        """Update self.X and self.y"""
+        if self.X is None:
+            self.X = new_X
+            self.y = new_y
+        else:
+            self.X = np.vstack([self.X, new_X])
+            self.y = np.vstack([self.y, new_y])
+
+    def __call__(self, func:Callable[[np.ndarray], np.float64]) -> tuple[np.float64, np.array]:
+        """Main minimize optimization loop"""
+        
+        # Initialize ensemble models
+        self._initialize_models()
+        
+        # Initialize with Sobol sequence design (better than Latin hypercube for this case)
+        X_init = self._sample_points(self.n_init)
+        y_init = self._evaluate_points(func, X_init)
+        self._update_eval_points(X_init, y_init)
+        
+        # Fit initial models
+        self._fit_models(self.X, self.y)
+        
+        # For validation set (for model weighting)
+        n_validation = min(5, len(self.X) // 2)
+        if n_validation > 0:
+            val_indices = self.rng.choice(len(self.X), size=n_validation, replace=False)
+            X_val = self.X[val_indices]
+            y_val = self.y[val_indices]
+            
+            # Remove validation points from training
+            train_mask = np.ones(len(self.X), dtype=bool)
+            train_mask[val_indices] = False
+            X_train = self.X[train_mask]
+            y_train = self.y[train_mask]
+            
+            # Update models with validation data
+            self._fit_models(X_train, y_train)
+            
+            # Calculate initial weights
+            self.model_weights = self._calculate_model_weights(X_val, y_val)
+        else:
+            # If not enough points for validation, use equal weights
+            self.model_weights = np.ones(len(self.models)) / len(self.models)
+
+        # Main optimization loop
+        while self.n_evals < self.budget:
+            # Update models with new data
+            if self.n_evals > self.n_init:
+                self._fit_models(self.X, self.y)
+                
+                # Periodically update model weights using a small validation set
+                if (self.n_evals - self.n_init) % 10 == 0 and len(self.X) > 10:
+                    n_val = min(5, len(self.X) // 2)
+                    val_indices = self.rng.choice(len(self.X), size=n_val, replace=False)
+                    X_val = self.X[val_indices]
+                    y_val = self.y[val_indices]
+                    
+                    # Calculate new weights
+                    new_weights = self._calculate_model_weights(X_val, y_val)
+                    self.model_weights = new_weights
+            
+            # Select next points using acquisition function
+            next_points = self._select_next_points(self.batch_size)
+            
+            # Evaluate these points
+            y_next = self._evaluate_points(func, next_points)
+            self._update_eval_points(next_points, y_next)
+            
+            # Break if we've exceeded budget
+            if self.n_evals >= self.budget:
+                break
+                
+        # Return best result
+        best_idx = np.argmin(self.y)
+        best_y = float(self.y[best_idx])
+        best_x = self.X[best_idx].copy()
+        
+        return best_y, best_x

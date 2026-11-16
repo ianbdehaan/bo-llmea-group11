@@ -5,6 +5,7 @@ os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 import re
 import sys
+import random
 import json
 import shutil
 import pickle
@@ -77,6 +78,9 @@ def run_stage1_for_target(target_name, problem_id, instance_id, problem_desc, cf
     prompt_generator = BaselinePromptGenerator()
     prompt_generator.is_bo = True
     prompt_generator.problem_desc = problem_desc
+    # "baseline": LLaMEA-BO prompts, "diverse": design space + random mutation operators
+    prompt_generator.prompt_variant = gen_cfg.get('prompt_variant', 'baseline')
+    prompt_generator.rng = random.Random(exp_cfg['seeds'][0])
     # the evaluator stops candidates that are too slow, and stage 2 runs the best one with 600 evaluations
     prompt_generator.runtime_prompt = (
         f"Each candidate is run {len(exp_cfg['seeds'])} times in parallel, one CPU core per run, and is stopped and counted as failed "

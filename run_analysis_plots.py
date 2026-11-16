@@ -1,3 +1,4 @@
+import sys
 import json
 import shutil
 from pathlib import Path
@@ -203,7 +204,8 @@ def stage2_statistics(df_raw, targets, order, names, budget, out_base):
 
 
 def main():
-    with open('configs.yaml', 'r', encoding='utf-8') as f:
+    config_path = sys.argv[1] if len(sys.argv) > 1 else 'configs.yaml'
+    with open(config_path, 'r', encoding='utf-8') as f:
         cfg = yaml.safe_load(f)
     out_base = Path(cfg['logging']['save_dir']) / 'convergence_analysis'
     out_base.mkdir(parents=True, exist_ok=True)

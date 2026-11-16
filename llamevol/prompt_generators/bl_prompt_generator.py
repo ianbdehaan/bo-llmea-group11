@@ -1,4 +1,5 @@
 import re
+import random
 from typing import Any
 import numpy as np
 import torch
@@ -6,6 +7,22 @@ from .abstract_prompt_generator import PromptGenerator, ResponseHandler, Generat
 from .bo_zeroplus_prompt_generator import BOPromptGeneratorReturnChecker
 from ..individual import Individual
 from ..population import Population
+
+
+# Group 11 change: design space and mutation operators of the "diverse" prompt variant
+DESIGN_SPACE = {
+    "initial design": "Sobol, Latin hypercube, random, maximin designs, different sizes (e.g. d+1 up to 4d points)",
+    "surrogate model": "GP with an anisotropic (ARD) Matern or RBF kernel, GP on log-transformed or rank-transformed y, random forest or extra trees (uncertainty from the spread of the trees), an ensemble of models, a local GP fitted only near the best point",
+    "acquisition function": "expected improvement, log expected improvement, lower confidence bound with a schedule for the exploration weight, probability of improvement, Thompson sampling from the GP posterior, a portfolio that switches between several acquisition functions",
+    "acquisition function optimizer": "L-BFGS-B from several starting points, differential evolution, a small evolution strategy, random candidates plus local refinement, candidates sampled around the best points",
+    "exploration strategy": "a trust region around the best point that grows and shrinks (as in TuRBO), restarts when progress stops, a switch from global to local search, batches of diverse points",
+}
+
+DIVERSE_MUTATIONS = {
+    "refine": "Refine the strategy of the selected solution to improve it.",
+    "replace_component": "Replace the {component} of the selected solution by a substantially different alternative (options: {options}), and adapt the rest of the algorithm where needed. Explain in the justification why the new {component} should work better.",
+    "new_idea": "Use the selected solution only as a reference: design a new BO algorithm whose main idea is clearly different from all algorithms in the current population (for example a different surrogate model, acquisition function or search strategy), and explain the difference in the justification.",
+}
 
 
 class BaselineResponseHandler(ResponseHandler):
@@ -76,6 +93,10 @@ class BaselinePromptGenerator(PromptGenerator):
         # reproducible, so we ask the LLM to derive every generator from np.random.
         # Group 11 change: limits on the run time (set in stage1_run.py from configs.yaml)
         self.runtime_prompt = ""
+        # Group 11 change: "baseline" is the LLaMEA-BO prompt, "diverse" adds a design space to the
+        # task and uses random mutation operators (see DIVERSE_MUTATIONS) to get more diverse algorithms
+        self.prompt_variant = "baseline"
+        self.rng = random.Random(0)
         self.reproducibility_prompt = (
             "The algorithm must be reproducible: the evaluator calls np.random.seed(seed) and torch.manual_seed(seed) before each run. "
             "Every other random generator must be created from np.random, e.g. `self.rng = np.random.default_rng(np.random.randint(2**31 - 1))`, "
@@ -139,6 +160,8 @@ class BaselinePromptGenerator(PromptGenerator):
                 candidate = candidates[0]
                 candidate_prompt = self.__get_candidate_prompt(candidate)
                 mutation_operator = "Refine the strategy of the selected solution to improve it."
+                if self.prompt_variant == "diverse":
+                    mutation_operator = self.__diverse_mutation()
 
                 selected_prompt = f"""The selected solution to update is:\n{candidate_prompt}\n{mutation_operator}\n"""
 
@@ -179,6 +202,27 @@ class BaselinePromptGenerator(PromptGenerator):
         
         return f"{description}\nWith code:\n{solution}\n{feedback}\n"
 
+    def __design_space_prompt(self):
+        # Group 11 change: list of alternatives for every BO component (only in the "diverse" variant)
+        if self.prompt_variant != "diverse":
+            return ""
+        lines = ["A BO algorithm can be built from many different components, for example:"]
+        for component, options in DESIGN_SPACE.items():
+            lines.append(f"- {component}: {options}")
+        lines.append("Do not always use the same default choices (e.g. a scikit-learn GP with expected improvement on random candidates); choose the components that suit the problem.")
+        return "\n".join(lines)
+
+    def __diverse_mutation(self):
+        # Group 11 change: one of three mutation operators, chosen at random (seeded, so the
+        # sequence of operators is reproducible). The operator text ends up in the saved prompt.
+        operator = self.rng.choice(["refine", "replace_component", "new_idea"])
+        if operator == "refine":
+            return DIVERSE_MUTATIONS["refine"]
+        if operator == "replace_component":
+            component = self.rng.choice(list(DESIGN_SPACE.keys()))
+            return DIVERSE_MUTATIONS["replace_component"].format(component=component, options=DESIGN_SPACE[component])
+        return DIVERSE_MUTATIONS["new_idea"]
+
     def task_description(self, task:GenerationTask) -> str:
         if self.is_bo:
             return self.__bo_task_description(task)
@@ -197,6 +241,7 @@ The func() can only be called as many times as the budget allows, not more. Each
 Name the class based on the characteristics of the algorithm with a template '<characteristics>BO'.
 {self.reproducibility_prompt}
 {self.runtime_prompt}
+{self.__design_space_prompt()}
 
 Give an excellent, novel and computationally efficient Bayesian Optimization algorithm to solve this task, give it a concise but comprehensive key-word-style description with the main ideas and justify your decision about the algorithm.
 """

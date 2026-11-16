@@ -19,6 +19,7 @@ targets:
 stage1_generation:
   outer_budget: 100          # max candidate algorithms per search
   inner_budget: 60           # 10 * d evaluations per run, including the initial design
+  prompt_variant: "baseline"  # "baseline": LLaMEA-BO prompts, "diverse": design space + random mutation operators
   metric: "AOCC"             # the evaluator ranks candidates by log-scale AOCC, mean over the 10 seeds
   eval_workers: 10           # the 10 seeds of a candidate run in parallel processes (0 = sequential)
   eval_timeout_seconds: 120  # a candidate whose 10 parallel runs take longer than this fails (keeps a search at a few hours)

@@ -20,6 +20,9 @@ This repository contains the implementation and evaluation for the **Bayesian Op
 ├── stage2_benchmark.py        # stage 2: 4 methods x 2 problems x 10 seeds (resumable)
 ├── check_reproducibility.py   # runs each best algorithm twice with the same seed and compares
 ├── run_analysis_plots.py      # stage 1 AOCC plots and stage 2 convergence plots
+├── analyze_diversity.py       # component and code diversity of the LLaMEA searches (section 11)
+├── configs_diverse.yaml       # alternative experiment: same settings, "diverse" prompts (section 11)
+├── run_diverse.sh             # runs the alternative experiment
 ├── requirements.txt           # exact package versions
 ├── llamevol/                  # LLaMEA-BO framework (adapted, see section 6)
 ├── misc/                      # AOCC helpers from LLaMEA-BO
@@ -27,6 +30,8 @@ This repository contains the implementation and evaluation for the **Bayesian Op
 ├── baseline/                  # BoTorch vanilla BO baseline (provided by the instructors)
 ├── Practical_Problems/        # real-world problem suite (provided by the instructors)
 ├── logs/                      # console logs of our runs (stage 1 searches, reproducibility check, stage 2, plots)
+├── logs_diverse/              # console logs of the alternative experiment
+├── outputs_diverse/           # results of the alternative experiment, same structure as outputs/
 └── outputs/
     ├── bbob_f8/               # stage 1 search on F8: best algorithm, checkpoint, full search log
     ├── real_world_1124/       # stage 1 search on problem 1124: same structure
@@ -86,6 +91,8 @@ python check_reproducibility.py             # same seed twice -> same result for
 python stage2_benchmark.py                  # generalization benchmark
 python run_analysis_plots.py                # figures and tables in outputs/convergence_analysis/
 ```
+
+The alternative experiment of section 11 runs with `bash run_diverse.sh` (all scripts accept the config file, e.g. `python stage1_run.py --config configs_diverse.yaml --target bbob`).
 
 `run_analysis_plots.py` reads `configs.yaml` and writes to `outputs/convergence_analysis/`:
 
@@ -308,7 +315,102 @@ Mean wall clock time per run (one CPU core): `NovelBayesianOptimizationBO` 65 mi
 
 **Note on the stage 2 time limit.** In a first stage 2 run the generated algorithm runs were limited to 1 h; all 20 runs of `NovelBayesianOptimizationBO` stopped after 558–589 evaluations. These runs are kept in `outputs/stage2_benchmark/runs_time_limited_1h/` and were repeated with a 3 h limit, where they all finished the 600 evaluations (≤ 74 min). The 60 other runs were not repeated.
 
-## 11. External code attribution
+## 11. Alternative experiment: prompts for more diverse algorithms
+
+In the main experiment the searches converged to one design type: every working candidate used a scikit-learn GP and almost all used expected improvement on a random candidate pool (table below), and the best AOCC stopped improving after a few generations. One cause is the LLaMEA-BO mutation prompt, which always asks to *"Refine the strategy of the selected solution to improve it."*. We therefore repeated the whole experiment with a second prompt variant, `prompt_variant: "diverse"` in `configs_diverse.yaml`; everything else (LLM, temperature, budgets, seeds, population, code template, evaluation) is identical.
+
+**Changes in the "diverse" prompt** (`llamevol/prompt_generators/bl_prompt_generator.py`, `DESIGN_SPACE` and `DIVERSE_MUTATIONS`):
+
+1. The task description lists alternatives for every BO component (initial design, surrogate model, acquisition function, acquisition optimizer, exploration strategy), e.g. random forests, ARD kernels, log-transformed y, lower confidence bound, Thompson sampling, L-BFGS-B or differential evolution, TuRBO-like trust regions and restarts, and asks not to always use the same default choices.
+2. Every mutation uses one of three operators, chosen at random (Python `random.Random(110)`, so the sequence is reproducible): **refine** (the original text), **replace component** (replace one randomly chosen component by a substantially different alternative from the list) or **new idea** (design an algorithm whose main idea differs from the whole population). The chosen operator is part of the saved prompt of each candidate.
+
+Stage 2 runs the two new best algorithms with exactly the same protocol; the BoTorch and CMA-ES runs are the same as in the main experiment (same seeds and settings), so their csv files are reused.
+
+### 11.1 Diversity of the searches
+
+`analyze_diversity.py` classifies every working candidate by keyword rules on its code (surrogate, acquisition function, acquisition optimizer, trust region) and computes the mean pairwise code similarity (`difflib`, 1 = identical). The rules are simple, so the numbers are approximate.
+
+| | BBOB, baseline prompt | BBOB, diverse prompt | 1124, baseline prompt | 1124, diverse prompt |
+|:---|:---:|:---:|:---:|:---:|
+| working candidates | 80 | 54 | 78 | 73 |
+| distinct component combinations | 9 | **19** | 8 | **25** |
+| surrogates | GP 80 | GP 43, random forest 11 | GP 78 | GP 57, random forest 16 |
+| acquisition functions | EI in all 80 (EI only: 62) | EI in 51 (EI only: 45), LCB, Thompson | EI in all 78 (EI only: 68) | EI only 23, Thompson only 18, LCB only 16, mixtures 16 |
+| acquisition optimizer (pool / L-BFGS / DE) | 49 / 8 / 23 | 42 / 10 / 2 | 75 / 3 / 0 | 10 / 30 / 33 |
+| with a trust region | 18 | 34 | 1 | 51 |
+| mean code similarity | 0.39 | 0.45 | 0.61 | **0.49** |
+| best AOCC | 0.350 | **0.369** | 0.460 | **0.470** |
+| generation of the best | 8 | 4 | 8 | 5 |
+
+The diverse prompt doubles (BBOB) to triples (1124) the number of distinct designs and introduces surrogates and acquisition functions that never appeared before (random forests, Thompson sampling, pure LCB), and both searches find a better algorithm than the baseline prompt. The designs are more diverse but not novel in a research sense: the LLM mostly recombines the standard components that the prompt lists (TuRBO-like trust regions, SMAC-like random forests). The price is a higher failure rate on BBOB (46 instead of 20 failed candidates, mostly timeouts and crashes of more complex designs).
+
+### 11.2 The two new algorithms
+
+**BBOB: `AdaptiveTrustRegionBO`** (`outputs_diverse/bbob_f8/best_bbob_f8_AdaptiveTrustRegionBO.py`, candidate 44, generation 4)
+
+```text
+n_init = min(max(10, 2d+1), budget/4) = 13 LHS points, radius r = 1
+loop until the budget is used:
+    GP <- fit GP(Matern 5/2, one length scale, + white noise), normalize_y, 2 restarts
+    if the best value improved by > 0.5 %: r <- min(1.2 r, 5)
+    else after 3 iterations without improvement: r <- max(0.5 r, 0.01)
+    if r reached 0.01 without improvement: r <- 1       # "restart", around the same best point
+    C <- min(20d, 500) = 120 uniform points in the box [x_best - r, x_best + r] (clipped)
+    evaluate the point of C with the largest expected improvement
+return best (y, x)
+```
+
+Compared with the main experiment it replaces global candidate pools by a trust region around the incumbent that adapts its size, i.e. a TuRBO-like local BO (without TuRBO's independent restarts). The comment in the code calls the kernel "ARD", but it uses a single length scale.
+
+**Real-world 1124: `EMBO_SB`** (`outputs_diverse/real_world_1124/best_real_world_1124_EMBO_SB.py`, candidate 57, generation 5)
+
+```text
+n_init = max(2d+1, 10) = 13 Sobol points
+loop until one evaluation is left:
+    RF <- random forest (50 trees, depth 10) on all points
+    batch <- min(5, remaining/4) (2-3 at the end)
+    x1 <- among 10-20 Sobol points, the one with the lowest RF prediction     # see below
+    x2..x_batch <- x_best + N(0, 0.2^2) (clipped)                            # local search
+    evaluate the batch
+return best (y, x)
+```
+
+The code describes its acquisition function as a lower confidence bound, but the "uncertainty" is the range of all observed values, the same for every point, so it only ranks by the RF mean. The acquisition optimizer runs L-BFGS-B on the *negative* of this value (a sign error), but the RF prediction is piecewise constant, so L-BFGS-B stops at its starting point and the sign has no effect: in practice the algorithm screens a few Sobol points with the random forest and spends most evaluations on Gaussian perturbations of the best point. It also stops one evaluation before the budget.
+
+### 11.3 Stage 2 results
+
+Median after 600 evaluations (loss for F8, objective for 1124), p-value of the Wilcoxon rank-sum test against the best median (Holm corrected), from `outputs_diverse/convergence_analysis/stage2_statistics.csv`:
+
+| Problem | Method | Mean ± SE | Median | p vs best |
+|:---|:---|:---:|:---:|:---:|
+| BBOB F8 | **Diverse, generated on BBOB (`AdaptiveTrustRegionBO`)** | 11.0 ± 6.2 | **3.35** | — |
+| | CMA-ES | 4.20 ± 0.32 | 4.39 | 0.43 |
+| | Diverse, generated on real-world (`EMBO_SB`) | 57.2 ± 20.6 | 11.2 | 0.022 |
+| | BoTorch | 35.2 ± 5.1 | 37.0 | 0.022 |
+| | *(main experiment) generated on BBOB / on real-world* | *9.10 / 288.5* | *8.68 / 266* | |
+| Real-world 1124 | **CMA-ES** | 1.84 ± 0.17 | **1.92** | — |
+| | Diverse, generated on real-world (`EMBO_SB`) | 1.98 ± 0.11 | 2.00 | 0.57 |
+| | BoTorch | 2.32 ± 0.15 | 2.29 | 0.18 |
+| | Diverse, generated on BBOB (`AdaptiveTrustRegionBO`) | 2.87 ± 0.19 | 2.97 | 0.011 |
+| | *(main experiment) generated on BBOB / on real-world* | *2.22 / 2.71* | *2.19 / 2.66* | |
+
+Medians at intermediate budgets for the new algorithms: on F8 `AdaptiveTrustRegionBO` reaches 77 / 11.1 / 4.4 after 60 / 150 / 300 evaluations (CMA-ES: 1021 / 230 / 20), on 1124 `EMBO_SB` reaches 3.43 / 2.59 / 2.34 (CMA-ES: 4.50 / 3.80 / 2.21). Mean run time: 28 min and 4 min per run.
+
+Plots: `outputs_diverse/convergence_analysis/stage2_bbob_loss_convergence.png`, `stage2_realworld_objective_convergence.png`, `stage1_aocc_history.png`.
+
+**Discussion.** With the diverse prompt both generated algorithms are better on their own target than in the main experiment. `AdaptiveTrustRegionBO` has the best median on F8 of all methods and is far ahead at small budgets, but one run (seed 117) got stuck (loss 61), which explains the large mean and why the difference to CMA-ES is not significant. `EMBO_SB` is now close to CMA-ES on 1124 (not significantly different) and better than BoTorch. Generalization reverses compared with the main experiment: the real-world algorithm `EMBO_SB` transfers well to F8 (median 11.2, 24× better than `AEBO_SB`), because its local Gaussian search follows the Rosenbrock valley, while the trust region algorithm from BBOB gets stuck on the multimodal FM problem (median 2.97, no progress after ≈150 evaluations), because its "restart" keeps searching around the same local optimum. Algorithms that work well locally specialise to unimodal or multimodal structure, which is visible in both experiments.
+
+### 11.4 Why the searches converge early, and temperature
+
+In all four searches the best AOCC stops improving after 2–5 generations (best per generation, main BBOB: 0.333, 0.333, 0.346, 0.346, …, 0.350). The logs suggest three reasons:
+
+* **Most mutations make an algorithm worse.** Only 21–26 % of the offspring have a higher AOCC than their parent (mean change −0.002 to −0.011), so with elitist (4 + 12) selection the same parents survive.
+* **The population loses its diversity.** In three of the four searches all 12 candidates of the last generation descend from a single algorithm of generation 0, so the search becomes a local search around one design.
+* **The fitness is noisy compared with the improvements.** The AOCC of the best algorithm varies with a standard deviation of 0.015–0.02 over the 10 seeds (standard error ≈ 0.005), which is as large as the improvements after the first generations, and with 60 evaluations a large part of the AOCC is determined by the initial design.
+
+Raising the temperature (0.8 now) would mainly add token-level randomness: more varied details, but also more broken code (syntax errors are already the most frequent failure) and it does not address the selection, lineage and noise effects above. Changing *what* is asked (section 11.1) increased the component diversity at the same temperature. More effective options would be diversity-preserving selection (more parents, niching by design type, non-elitist selection), more seeds or a larger budget per candidate to reduce the fitness noise, and evaluating candidates at more than one budget.
+
+## 12. External code attribution
 
 * **`llamevol/`, `misc/`, `analysis/`**: adapted from **LLaMEA-BO** by Wenhu Li, Niki van Stein, Thomas Bäck and Elena Raponi, https://github.com/BayesOptApp/LLaMEA-BO/ (based on LLaMEA, https://github.com/XAI-liacs/LLaMEA).
 * **`baseline/`, `Practical_Problems/`**: provided by the course instructors (Iván Olarte Rodríguez, Elena Raponi, Santiago García Mayayo), https://github.com/BayesOptApp/BO_Course_Assignment.

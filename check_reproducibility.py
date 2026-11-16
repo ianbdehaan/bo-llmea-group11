@@ -11,7 +11,7 @@ from stage2_benchmark import load_generated_class, get_target_problem, run_gener
 # two runs give exactly the same evaluations. Usage: python check_reproducibility.py [n_evals]
 
 n_evals = int(sys.argv[1]) if len(sys.argv) > 1 else 60
-cfg = yaml.safe_load(open('configs.yaml'))
+cfg = yaml.safe_load(open(sys.argv[2] if len(sys.argv) > 2 else 'configs.yaml'))
 dim = cfg['experiment']['dimension']
 seed = cfg['experiment']['seeds'][0]
 bbob = cfg['targets']['bbob']

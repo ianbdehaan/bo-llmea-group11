@@ -1,0 +1,59 @@
+# Alternative experiment: the same settings as configs.yaml, only the stage 1 prompt variant and the
+# output folder differ (see README section 11)
+experiment:
+  group_id: 11
+  dimension: 6
+  # seeds of group g are 10g + r, r = 0..9 (checked in stage2_benchmark.py)
+  seeds: [110, 111, 112, 113, 114, 115, 116, 117, 118, 119]
+
+targets:
+  bbob:
+    suite: "BBOB"
+    function_id: 8
+    instance: 1
+    description: "BBOB function 8 (Rosenbrock, original), instance 1, dimension 6, minimization"
+  real_world:
+    problem_id: 1124
+    # practical problems have a single fixed version, the instance id is only a label
+    instance: 1
+    description: "the real-world problem 1124 (parameter estimation of Frequency Modulated Sound Waves), dimension 6, minimization"
+
+stage1_generation:
+  outer_budget: 100          # max candidate algorithms per search
+  inner_budget: 60           # 10 * d evaluations per run, including the initial design
+  prompt_variant: "diverse"  # "baseline": LLaMEA-BO prompts, "diverse": design space + random mutation operators
+  metric: "AOCC"             # the evaluator ranks candidates by log-scale AOCC, mean over the 10 seeds
+  eval_workers: 10           # the 10 seeds of a candidate run in parallel processes (0 = sequential)
+  eval_timeout_seconds: 120  # a candidate whose 10 parallel runs take longer than this fails (keeps a search at a few hours)
+  population:
+    n_parent: 4
+    n_offspring: 12
+    use_elitism: true        # (4 + 12) selection
+    n_retry: 3               # re-prompts when the answer contains no code
+  llm:
+    # Qwen3-Coder-30B-A3B-Instruct (open weights, Q4_K_M) served by Ollama on the machine itself
+    model_name: "qwen3-coder:latest"
+    ollama_url: "http://localhost:11434"
+    num_ctx: 32768           # context length in tokens (prompt + answer)
+    temperature: 0.8
+    max_tokens: 16384        # max generated tokens per answer
+    timeout_seconds: 900     # per request
+    max_api_retries: 30      # retries of a failed request (exponential backoff)
+    max_wait_seconds: 3600   # longest wait between two retries
+
+stage2_generalization:
+  evaluation_budget: 600     # 100 * d evaluations per run, including the initial design
+  runs_per_algorithm: 10
+  workers: 40                # parallel runs (one process per run)
+  run_time_limit_seconds: 10800 # a generated algorithm run is stopped after this time (status saved in the csv)
+  botorch:
+    n_doe: 12                # 2 * d Sobol initial points, part of the budget
+    acquisition_function: "expected_improvement"
+  cma_es:
+    sigma0_fraction: 0.2     # sigma0 = 0.2 * (ub - lb) = 2.0
+  baselines:
+    - name: "botorch_default"
+    - name: "cma_es"
+
+logging:
+  save_dir: "./outputs_diverse"

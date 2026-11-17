@@ -1,3 +1,4 @@
+# Provided by the course instructors (BoTorch vanilla BO baseline): https://github.com/BayesOptApp/BO_Course_Assignment
 from .AbstractBayesianOptimizer import AbstractBayesianOptimizer
 from typing import Union, Callable, Optional
 from ioh.iohcpp.problem import RealSingleObjective, BBOB

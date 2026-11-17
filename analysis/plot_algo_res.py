@@ -1,3 +1,4 @@
+# From LLaMEA-BO (Wenhu Li, Niki van Stein, Thomas Baeck, Elena Raponi): https://github.com/BayesOptApp/LLaMEA-BO/
 import logging
 import os
 

@@ -1,3 +1,4 @@
+# Provided by the course instructors (BoTorch vanilla BO baseline): https://github.com/BayesOptApp/BO_Course_Assignment
 from .AbstractAlgorithm import AbstractAlgorithm
 from typing import Union, Optional, List
 from pydoe import lhs

@@ -102,6 +102,8 @@ def run_stage1_for_target(target_name, problem_id, instance_id, problem_desc, cf
             population = pickle.load(f)
         print(f'Resuming from {checkpoint_path}: generation {population.get_current_generation()}, '
               f'{population.get_population_size()} candidates done', flush=True)
+        # use the output folder of the config, also when the results folder was moved or renamed
+        population.save_dir = str(output_dir)
         clean_unfinished_generation(population, Path(population.save_dir) / population._save_dir_suffix)
     else:
         population = ESPopulation(n_parent=pop_cfg['n_parent'], n_offspring=pop_cfg['n_offspring'],

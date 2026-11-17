@@ -1,3 +1,4 @@
+# Provided by the course instructors (BoTorch vanilla BO baseline): https://github.com/BayesOptApp/BO_Course_Assignment
 r"""
 utf-8
 

@@ -37,7 +37,7 @@ This repository contains the implementation and evaluation for the **Bayesian Op
 
 Each stage 1 search folder `outputs/<target>/ESPopulation_<name>_<timestamp>/` contains for every candidate `<generation>-<index>_<name>_<AOCC>.py` (code), `_prompt.md` (system prompt + prompt), `_respond.md` (LLM answer + evaluation feedback or error) and `_handler.pkl`, plus `history.jsonl` with one line per candidate (generation, parents, prompt, response, code, error, AOCC of each of the 10 runs, run time, token counts) and the final population pickle.
 
-The runs were made with the config file under the name `configs_diverse.yaml` and the output folder `outputs_diverse/`, which were renamed to `configs.yaml` and `outputs/` afterwards (only the `save_dir` line changed), so these names still appear in the logs.
+The runs were made with the config file under the name `configs_diverse.yaml` and the output folder `outputs_diverse/`, which were renamed to `configs.yaml` and `outputs/` afterwards (only the `save_dir` line changed), so these names still appear in the logs (`stage1_run.py` always uses the folder of the config, also when it resumes a search).
 
 ## 2. Environment setup
 
@@ -245,7 +245,9 @@ The machine is shared with other users. The LLM was served by the machine's Olla
 | LLM tokens (prompt / answer) | 363K / 261K | 416K / 293K |
 | wall clock time | 1 h 25 min | 2 h 23 min |
 
-On BBOB most failures are syntax errors, on the real-world problem most failures are timeouts (candidates whose 10 runs take longer than 120 s). Both searches found their best algorithm in the middle of the search (generations 4 and 5); the AOCC improved by +0.030 (BBOB) and +0.043 (real-world) over the best candidate of generation 0.
+![Stage 1 AOCC](outputs/convergence_analysis/stage1_aocc_history.png)
+
+AOCC of every candidate in generation order (failed candidates as AOCC 0) and the best AOCC so far (`outputs/convergence_analysis/stage1_aocc_history.png`; the LLaMEA-BO plots per generation are in `outputs/convergence_analysis/stage1_*/`). On BBOB most failures are syntax errors, on the real-world problem most failures are timeouts (candidates whose 10 runs take longer than 120 s). Both searches found their best algorithm in the middle of the search (generations 4 and 5); the AOCC improved by +0.030 (BBOB) and +0.043 (real-world) over the best candidate of generation 0.
 
 ### 9.2 BBOB F8: `AdaptiveTrustRegionBO`
 
@@ -302,7 +304,7 @@ Both algorithms ended up as local searches around the best point, but with diffe
 
 ## 10. Results
 
-All numbers below are produced by `stage2_benchmark.py` and `run_analysis_plots.py` (`outputs/stage2_benchmark/stage2_final_performance.csv`, `outputs/convergence_analysis/stage2_statistics.csv`). 4 methods × 2 problems × 10 seeds, 600 evaluations each, all 80 runs used the full budget (`Run_Status = ok`).
+All numbers below are produced by `stage2_benchmark.py` and `run_analysis_plots.py` (`outputs/stage2_benchmark/stage2_final_performance.csv`, `outputs/convergence_analysis/stage2_statistics.csv`). 4 methods × 2 problems × 10 seeds, 600 evaluations each, all 80 runs used the full budget (`Run_Status = ok`). Both problems are minimisation problems and are used as they are (no transformation of the objective); every method runs on the same problem with bounds $[-5, 5]^6$, budget and seeds, and its initial design counts towards the budget.
 
 ### 10.1 Convergence plots
 
@@ -315,8 +317,6 @@ Best-so-far value, mean ± standard error over the 10 runs, linear axes. The lef
 **Real-world 1124 (objective $f$)**
 
 ![RW](outputs/convergence_analysis/stage2_realworld_objective_convergence.png)
-
-Stage 1 search progress: `outputs/convergence_analysis/stage1_aocc_history.png` and the LLaMEA-BO plots in `outputs/convergence_analysis/stage1_*/`.
 
 ### 10.2 Final value after 600 evaluations and AOCC
 
@@ -370,9 +370,11 @@ The best AOCC stops improving after a few generations (generation 2 on BBOB, gen
 * **The population loses its diversity.** All 12 candidates of the last generation descend from a single algorithm of generation 0 (#1 on BBOB, #2 on the real-world problem), so the search becomes a local search around one lineage, even though the lineage itself changes structure through the "replace component" mutations (section 9.1).
 * **The fitness is noisy compared with the improvements.** The AOCC of the best algorithm varies with a standard deviation of 0.020 (BBOB) and 0.015 (real-world) over the 10 seeds, so the mean AOCC of a candidate has a standard error of ≈ 0.005–0.006 and the difference between two candidates ≈ 0.008. A truly better candidate is still selected more often than not, but differences below ≈ 0.01 cannot be told apart reliably. In addition, every candidate is evaluated only once on the same 10 seeds, and the elite are the highest of many noisy scores, so their AOCC is biased upward and is never re-evaluated, which keeps the same parents in the population. The late changes of the best AOCC (e.g. 0.369 → 0.367 → 0.368 on BBOB) are within this noise.
 
-Raising the temperature (0.8 now) would mainly add token-level randomness (more varied details, but also more broken code; syntax errors are already the most frequent failure on BBOB) and does not address the selection, lineage and noise effects above. More effective options would be diversity-preserving selection (more parents, niching by design type, non-elitist selection), more seeds or a larger budget per candidate to reduce the fitness noise, and evaluating candidates at more than one budget.
+Diversity-preserving selection (more parents, niching by design type), more seeds per candidate to reduce the fitness noise, and evaluating candidates at more than one budget would be natural next steps.
 
 ## 12. External code attribution
+
+Every reused file starts with a comment that names the original authors and links to the original code.
 
 * **`llamevol/`, `misc/`, `analysis/`**: adapted from **LLaMEA-BO** by Wenhu Li, Niki van Stein, Thomas Bäck and Elena Raponi, https://github.com/BayesOptApp/LLaMEA-BO/ (based on LLaMEA, https://github.com/XAI-liacs/LLaMEA).
 * **`baseline/`, `Practical_Problems/`**: provided by the course instructors (Iván Olarte Rodríguez, Elena Raponi, Santiago García Mayayo), https://github.com/BayesOptApp/BO_Course_Assignment.

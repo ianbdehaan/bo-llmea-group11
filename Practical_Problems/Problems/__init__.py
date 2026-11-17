@@ -1,3 +1,4 @@
+# Provided by the course instructors (real-world problem suite): https://github.com/BayesOptApp/Practical_Problems
 from .bench_fun_eps import bench_fun_eps
 from .bench_fun_pitz import bench_fun_pitz
 from .Circular_Antenna_Array import Circular_Antenna_Array

@@ -1,3 +1,4 @@
+# Provided by the course instructors (real-world problem suite): https://github.com/BayesOptApp/Practical_Problems
 import numpy as np
 from copy import deepcopy
 from typing import List, Tuple, Union, Optional

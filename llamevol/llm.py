@@ -1,3 +1,5 @@
+# Adapted from LLaMEA-BO (Wenhu Li, Niki van Stein, Thomas Baeck, Elena Raponi): https://github.com/BayesOptApp/LLaMEA-BO/
+# (based on LLaMEA: https://github.com/XAI-liacs/LLaMEA). Our changes are marked with "Group 11 change".
 """LLM manager to connect to the model.
 """
 # Group 11 change: the original LLaMEA-BO file had clients for many api providers (OpenAI,

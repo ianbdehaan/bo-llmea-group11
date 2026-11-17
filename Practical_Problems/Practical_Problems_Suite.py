@@ -1,3 +1,4 @@
+# Provided by the course instructors (real-world problem suite): https://github.com/BayesOptApp/Practical_Problems
 from .Problems import *
 from typing import Union, Optional, List
 from abc import abstractmethod, ABC

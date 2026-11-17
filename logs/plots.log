@@ -1,4 +1,6 @@
+No final population in outputs/bbob_f8/__pycache__, using the checkpoint
 Stage 1 LLaMEA plots saved in: outputs/convergence_analysis/stage1_bbob_f8
+No final population in outputs/real_world_1124/__pycache__, using the checkpoint
 Stage 1 LLaMEA plots saved in: outputs/convergence_analysis/stage1_real_world_1124
                  target  candidates  failed  best_index  best_generation             best_name  best_aocc  prompt_tokens  response_tokens
     BBOB F8, instance 1         100      46          44                4 AdaptiveTrustRegionBO   0.369177         362993           261468

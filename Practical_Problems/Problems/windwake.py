@@ -1,3 +1,4 @@
+# Provided by the course instructors (real-world problem suite): https://github.com/BayesOptApp/Practical_Problems
 """Version-dispatched FLORIS wind layout benchmark.
 
 FLORIS 2.5.2: original implementation, including original constraint behavior.

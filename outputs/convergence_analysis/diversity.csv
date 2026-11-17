@@ -1,3 +1,0 @@
-search,candidates,working,distinct_component_combinations,surrogates,acquisitions,acq_optimizers,with_trust_region,mean_code_similarity,aocc_std,best_aocc
-outputs/bbob_f8,100,49,21,"{'GP (sklearn)': 37, 'random forest': 12}","{'UCB/LCB': 21, 'EI': 12, 'Thompson': 14, 'EI+UCB/LCB': 1, 'EI+PI': 1}","{'gradient (L-BFGS) restarts': 37, 'differential evolution': 9, 'candidate pool only': 3}",13,0.563,0.0216,0.3528
-outputs/real_world_1124,100,55,18,"{'GP (sklearn)': 41, 'random forest': 14}","{'EI': 29, 'Thompson': 18, 'UCB/LCB': 7, 'other': 1}","{'candidate pool only': 49, 'differential evolution': 4, 'gradient (L-BFGS) restarts': 2}",30,0.359,0.0136,0.4949

@@ -30,10 +30,9 @@ stage1_generation:
     n_retry: 3               # re-prompts when the answer contains no code
   llm:
     # Qwen3-Coder-30B-A3B-Instruct (open weights, Q4_K_M) served by Ollama on the machine itself
-    model_name: "qwen3:32b"
+    model_name: "qwen3-coder:latest"
     ollama_url: "http://localhost:11434"
     num_ctx: 32768           # context length in tokens (prompt + answer)
-    think: true              # thinking mode of qwen3 (reasoning before the answer, saved in the logs)
     temperature: 0.8
     max_tokens: 16384        # max generated tokens per answer
     timeout_seconds: 900     # per request

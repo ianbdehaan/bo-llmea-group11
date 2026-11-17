@@ -1,3 +1,3 @@
 target,candidates,failed,best_index,best_generation,best_name,best_aocc,prompt_tokens,response_tokens
-"BBOB F8, instance 1",100,51,90,8,AdaptiveMaternExpoLCBBO,0.3528268618621445,298597,461545
-Real-world problem 1124,100,45,91,8,GradientForestHybridUCBBO,0.4949465062098389,288319,463598
+"BBOB F8, instance 1",100,46,44,4,AdaptiveTrustRegionBO,0.3691767271737275,362993,261468
+Real-world problem 1124,100,27,57,5,EMBO_SB,0.46990257444975525,415514,293416

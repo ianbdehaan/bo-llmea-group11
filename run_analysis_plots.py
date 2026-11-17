@@ -142,23 +142,34 @@ def plot_stage2_convergence(targets, cfg, out_base):
             continue
         # loss for BBOB (f_opt known), raw objective for the real-world problem (f_opt = 0)
         sub['Metric'] = np.maximum(sub['Best_So_Far'] - target['f_opt'], 1e-12)
-        fig, ax = plt.subplots(figsize=(8.5, 5.2), dpi=300)
+        # linear y axis; the first evaluations are orders of magnitude larger than the rest, so the
+        # right panel zooms in on evaluations 10*d (the stage 1 budget) to the end of the budget
+        zoom_start = 10 * dim
+        fig, axes = plt.subplots(1, 2, figsize=(14, 5.2), dpi=300)
+        zoom_top = 0.0
         for algo in order:
             pivot = sub[sub['Algorithm'] == algo].pivot(index='Evaluation', columns='Seed', values='Metric')
             if pivot.empty:
                 continue
+            evals = pivot.index.values
             mean_vals = pivot.mean(axis=1).values
             se_vals = pivot.std(axis=1, ddof=1).values / np.sqrt(pivot.shape[1])
             color, ls = styles[algo]
-            ax.plot(pivot.index.values, mean_vals, label=names[algo], color=color, linestyle=ls, linewidth=2.1)
-            ax.fill_between(pivot.index.values, np.maximum(mean_vals - se_vals, 1e-12), mean_vals + se_vals, color=color, alpha=0.18)
-        ax.set_title(f"Stage 2: {target['title']} (d={dim})", fontsize=12, fontweight='bold')
-        ax.set_xlabel(f'Function evaluations (budget = {budget})', fontsize=11)
-        ax.set_ylabel(ylabel, fontsize=11)
-        ax.set_yscale('log')
-        ax.set_xlim(1, budget)
-        ax.grid(True, which='both', linestyle='--', alpha=0.35)
-        ax.legend(fontsize=9.5, loc='upper right', framealpha=0.92)
+            for ax in axes:
+                ax.plot(evals, mean_vals, label=names[algo], color=color, linestyle=ls, linewidth=2.1)
+                ax.fill_between(evals, np.maximum(mean_vals - se_vals, 0), mean_vals + se_vals, color=color, alpha=0.18)
+            zoom_top = max(zoom_top, (mean_vals + se_vals)[evals >= zoom_start].max())
+        axes[0].set_title(f"Stage 2: {target['title']} (d={dim}), full run", fontsize=12, fontweight='bold')
+        axes[0].set_xlim(1, budget)
+        axes[0].set_ylim(bottom=0)
+        axes[1].set_title(f"Zoom: evaluations {zoom_start} to {budget}", fontsize=12, fontweight='bold')
+        axes[1].set_xlim(zoom_start, budget)
+        axes[1].set_ylim(0, 1.05 * zoom_top)
+        for ax in axes:
+            ax.set_xlabel(f'Function evaluations (budget = {budget})', fontsize=11)
+            ax.set_ylabel(ylabel, fontsize=11)
+            ax.grid(True, linestyle='--', alpha=0.35)
+        axes[1].legend(fontsize=9.5, loc='upper right', framealpha=0.92)
         plt.tight_layout()
         plt.savefig(out_base / f'{stem}.png', dpi=300)
         plt.savefig(out_base / f'{stem}.pdf')

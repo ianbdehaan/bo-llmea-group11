@@ -10,6 +10,7 @@ This repository contains the implementation and evaluation for the **Bayesian Op
 | Stage 1 | 100 candidate algorithms per search, 60 evaluations per run, 10 runs (seeds 110–119), ranked by AOCC |
 | Stage 2 | 4 methods × 2 problems × 10 seeds × 600 evaluations, compared by final value and by AOCC |
 | LLM | Qwen3-32B (open weights, Q4_K_M) with thinking mode, served locally with Ollama |
+| Prompts | LLaMEA-BO prompts extended with a BO design space and random mutation operators (refine / replace a component / new idea) for more diverse algorithms (section 5.3) |
 
 ## 1. Repository structure
 
@@ -112,6 +113,8 @@ Stage 1 writes the best algorithm to `outputs/<target>/best_<target>_<ClassName>
 
 ## 5. Configuring prompts and hyperparameters
 
+### 5.1 Settings
+
 All settings are in `configs.yaml`:
 
 | Section | Parameter | Value | Meaning |
@@ -123,7 +126,7 @@ All settings are in `configs.yaml`:
 | targets.* | `description` | text | problem description inserted in the prompt |
 | stage1_generation | `outer_budget` | 100 | candidate algorithms per search |
 | stage1_generation | `inner_budget` | 60 | evaluations per run (10·d), including the initial design |
-| stage1_generation | `prompt_variant` | `diverse` | `diverse`: design space + random mutation operators (below); `baseline`: the original LLaMEA-BO prompts |
+| stage1_generation | `prompt_variant` | `diverse` | `diverse`: design space + random mutation operators (section 5.3); `baseline`: the original LLaMEA-BO prompts |
 | stage1_generation | `eval_workers` | 10 | the 10 runs of a candidate in parallel processes |
 | stage1_generation | `eval_timeout_seconds` | 120 | a candidate whose 10 runs take longer fails |
 | population | `n_parent`, `n_offspring`, `use_elitism` | 4, 12, true | (4 + 12) elitist ES of LLaMEA-BO |
@@ -138,20 +141,64 @@ All settings are in `configs.yaml`:
 | stage2_generalization.botorch | `n_doe`, `acquisition_function` | 12, EI | initial design of 2·d points, expected improvement |
 | stage2_generalization.cma_es | `sigma0_fraction` | 0.2 | σ0 = 0.2·(ub − lb) = 2, uniform random x0, restarts if CMA-ES stops early |
 
-**Prompts.** The prompts are built in `llamevol/prompt_generators/bl_prompt_generator.py` (`BaselinePromptGenerator` with `is_bo = True`, the LLaMEA-BO prompt). The task description is `__bo_task_description`, the code template is `__bo_code_structure`, the answer format (`# Description / # Justification / # Code`) is `response_format`, and the feedback after an evaluation is `evaluation_feedback_prompt` (mean and std of the AOCC and the run time). Two parts are set from `stage1_run.py`: `reproducibility_prompt` and `runtime_prompt` (section 6). Mutation and crossover prompts include the parent code and a summary of the current population.
+### 5.2 Prompts
 
-The original LLaMEA-BO mutation prompt always asks to *"Refine the strategy of the selected solution to improve it."*, which tends to keep the search on one design. We use a variant for more diverse algorithms (`prompt_variant: "diverse"`, `DESIGN_SPACE` and `DIVERSE_MUTATIONS` in the same file):
+The prompts are built in `llamevol/prompt_generators/bl_prompt_generator.py` (`BaselinePromptGenerator` with `is_bo = True`, the LLaMEA-BO prompt). The task description is `__bo_task_description`, the code template is `__bo_code_structure`, the answer format (`# Description / # Justification / # Code`) is `response_format`, and the feedback after an evaluation is `evaluation_feedback_prompt` (mean and std of the AOCC and the run time). Two parts are set from `stage1_run.py`: `reproducibility_prompt` and `runtime_prompt` (section 6). Mutation and crossover prompts include the parent code and a summary of the current population.
 
-1. The task description lists alternatives for every BO component (initial design, surrogate model, acquisition function, acquisition optimizer, exploration strategy), e.g. random forests, ARD kernels, log-transformed y, lower confidence bound, Thompson sampling, L-BFGS-B or differential evolution, TuRBO-like trust regions and restarts, and asks not to always use the same default choices.
-2. Every mutation uses one of three operators, chosen at random (Python `random.Random(110)`, so the sequence is reproducible): **refine** (the original text), **replace component** (replace one randomly chosen component by a substantially different alternative from the list) or **new idea** (design an algorithm whose main idea differs from the whole population). The chosen operator is part of the saved prompt of each candidate.
+### 5.3 Prompts for more diverse algorithms
 
-**Selection metric (AOCC).** Every candidate is run once per seed (110–119) with 60 evaluations. For each run the evaluator (`ConvergenceCurveAnalyzer` in `llamevol/evaluator/evaluator_result.py`, as in LLaMEA-BO) takes the best-so-far curve of the loss $f(x_t) - f_{opt}$, clips it to $[10^{-8}, 10^{9}]$ (LLaMEA-BO uses the upper bound $10^9$ for $d > 5$), scales it on a log10 scale to $[0, 1]$ and computes
+With the original LLaMEA-BO prompts the LLM tends to produce the same kind of algorithm again and again: every mutation asks *"Refine the strategy of the selected solution to improve it."*, so the offspring are small variations of their parent, and nothing in the prompt suggests alternatives to the default choices of the model (in a preliminary run with these prompts every working candidate used a scikit-learn GP with expected improvement). To make the search explore different designs we changed two things (`prompt_variant: "diverse"`, `DESIGN_SPACE`, `DIVERSE_MUTATIONS`, `__design_space_prompt` and `__diverse_mutation` in `llamevol/prompt_generators/bl_prompt_generator.py`). The temperature (0.8) and everything else is unchanged.
+
+**1. Design space in the task description.** Every prompt (initial generation and mutations) contains this list after the problem description:
+
+```text
+A BO algorithm can be built from many different components, for example:
+- initial design: Sobol, Latin hypercube, random, maximin designs, different sizes (e.g. d+1 up to 4d points)
+- surrogate model: GP with an anisotropic (ARD) Matern or RBF kernel, GP on log-transformed or rank-transformed y,
+  random forest or extra trees (uncertainty from the spread of the trees), an ensemble of models, a local GP fitted
+  only near the best point
+- acquisition function: expected improvement, log expected improvement, lower confidence bound with a schedule for
+  the exploration weight, probability of improvement, Thompson sampling from the GP posterior, a portfolio that
+  switches between several acquisition functions
+- acquisition function optimizer: L-BFGS-B from several starting points, differential evolution, a small evolution
+  strategy, random candidates plus local refinement, candidates sampled around the best points
+- exploration strategy: a trust region around the best point that grows and shrinks (as in TuRBO), restarts when
+  progress stops, a switch from global to local search, batches of diverse points
+Do not always use the same default choices (e.g. a scikit-learn GP with expected improvement on random candidates);
+choose the components that suit the problem.
+```
+
+**2. Random mutation operators.** Instead of always "refine", every mutation prompt ends with one of three operators, chosen uniformly at random:
+
+| Operator | Text in the prompt | Purpose |
+|:---|:---|:---|
+| refine | *"Refine the strategy of the selected solution to improve it."* (the original text) | local improvement of a good design |
+| replace component | *"Replace the {component} of the selected solution by a substantially different alternative (options: {options}), and adapt the rest of the algorithm where needed. Explain in the justification why the new {component} should work better."* The component is chosen uniformly from the five components above, and its options from the list are inserted. | structural change of one part of the algorithm |
+| new idea | *"Use the selected solution only as a reference: design a new BO algorithm whose main idea is clearly different from all algorithms in the current population (for example a different surrogate model, acquisition function or search strategy), and explain the difference in the justification."* | jump to a different design (the prompt also contains a summary of the current population) |
+
+The operators are drawn with Python's `random.Random(110)` (seeded with the first seed of the group), so the sequence of operators is reproducible and the same in both searches; the operator of every candidate can be read in its saved prompt (`_prompt.md`, `history.jsonl`). With the original prompts this behaviour is obtained with `prompt_variant: "baseline"`.
+
+**How often they were used and what they gave** (both searches, the 96 offspring after generation 0; the same operator sequence in both searches):
+
+| Operator | Used | Working offspring (BBOB / real-world) | Better than the parent (BBOB / real-world) |
+|:---|:---:|:---:|:---:|
+| refine | 40 | 21 / 18 | 7 / 3 |
+| replace component | 29 (exploration strategy 8, surrogate 7, acquisition function 5, acquisition optimizer 5, initial design 4) | 15 / 20 | 5 / 6 |
+| new idea | 27 | 12 / 15 | 5 / 1 |
+
+The effect on the searches is described in section 11.1 (several surrogates and acquisition functions, 18–21 distinct component combinations) and visible in the lineages of the two best algorithms (section 9.1), which change structure several times (e.g. GP + EI → Thompson sampling → trust region ensemble → random forest).
+
+### 5.4 Selection metric (AOCC)
+
+Every candidate is run once per seed (110–119) with 60 evaluations. For each run the evaluator (`ConvergenceCurveAnalyzer` in `llamevol/evaluator/evaluator_result.py`, as in LLaMEA-BO) takes the best-so-far curve of the loss $f(x_t) - f_{opt}$, clips it to $[10^{-8}, 10^{9}]$ (LLaMEA-BO uses the upper bound $10^9$ for $d > 5$), scales it on a log10 scale to $[0, 1]$ and computes
 
 $$\text{AOCC} = 1 - \int_0^1 \frac{\log_{10} \text{clip}(\min_{s \le t} f(x_s) - f_{opt}) - \log_{10} 10^{-8}}{\log_{10} 10^{9} - \log_{10} 10^{-8}} \, dt$$
 
 with the trapezoidal rule over the evaluations (1 is best). The fitness of a candidate is the mean AOCC over the 10 runs; candidates that crash, exceed the budget or time out get AOCC 0. For BBOB F8, $f_{opt}$ is the known optimum of instance 1 ($f_{opt} = 149.15$, `ioh.get_problem(8, 1, 6).optimum.y`). For problem 1124 the optimum is unknown and the suite uses $f_{opt} = 0$ (the objective is a sum of squared errors between the generated and the target sound wave, so it is non-negative and 0 means a perfect fit), so its AOCC is computed on the raw objective. The best algorithm of each search is selected only by its AOCC on its own target. In stage 2 the same AOCC is computed for every run with 600 evaluations (`run_analysis_plots.py`), so the methods are also compared on their anytime performance.
 
-**Generated algorithms.** Their hyperparameters (initial design size, kernel, acquisition settings, trust region constants) are constants in `__init__` of the generated files `outputs/<target>/best_*.py` and can be edited there.
+### 5.5 Hyperparameters of the generated algorithms
+
+Their hyperparameters (initial design size, kernel, acquisition settings, trust region constants) are constants in `__init__` of the generated files `outputs/<target>/best_*.py` and can be edited there.
 
 ## 6. Modifications to LLaMEA and why
 
@@ -166,7 +213,7 @@ The `llamevol/` package is LLaMEA-BO (see credits). All our changes are marked w
 7. **Reproducibility rule in the prompt** (`reproducibility_prompt`). The evaluator seeds `np.random` and `torch` before each run, but generated code often creates unseeded generators (e.g. `qmc.Sobol(scramble=True)`), so the same seed gave different results. The prompt now asks to derive every generator from `np.random`; `check_reproducibility.py` confirms that both best algorithms are reproducible.
 8. **Run time rule in the prompt** (`runtime_prompt`). Tells the LLM about the timeout and that the algorithm is later run with 600 evaluations, so it should not become too expensive per iteration.
 9. **Problem description.** The original prompt said "evaluated on the BBOB test suite of ..." also for the real-world problem; it now uses the description from `configs.yaml`.
-10. **Diverse prompt variant** (`bl_prompt_generator.py`, section 5). Design space in the task description and random mutation operators.
+10. **Prompts for more diverse algorithms** (`bl_prompt_generator.py`, section 5.3). Design space in the task description and random mutation operators.
 11. **Real-world problems and seeds in the evaluator** (`ioh_evaluator.py`). LLaMEA-BO only supports BBOB functions; problem ids ≥ 1000 now load the practical problem from `Practical_Problems/`, dimension 6 is allowed, and every run seeds `np.random` and `torch` with its own seed (110–119) instead of using unseeded runs.
 
 ## 7. Randomness and reproducibility
@@ -194,7 +241,7 @@ The machine is shared with other users. The LLM was served by the machine's Olla
 | | BBOB F8 search | Real-world 1124 search |
 |:---|:---|:---|
 | candidates (generations) | 100 (4 + 8 × 12) | 100 (4 + 8 × 12) |
-| mutation operators used (refine / replace component / new idea / fix error) | 37 / 24 / 26 / 9 | 39 / 25 / 26 / 6 |
+| mutation operators used (refine / replace component / new idea, section 5.3) | 40 / 29 / 27 (9 of them on a failed parent) | 40 / 29 / 27 (6 of them on a failed parent) |
 | failed candidates | 51 (15 ValueError, 10 AttributeError, 7 TypeError, 7 NameError, 6 IndexError, 2 over budget, 2 timeouts, 2 other) | 45 (18 ValueError, 8 AttributeError, 5 TypeError, 5 over budget, 4 NameError, 2 IndexError, 1 timeout, 2 other) |
 | best AOCC per generation 0, 1, …, 8 | 0.294, 0.304, 0.312, 0.334, 0.328, 0.329, 0.339, 0.341, **0.353** | 0.475, 0.473, 0.477, 0.477, 0.474, 0.468, 0.492, 0.492, **0.495** |
 | best algorithm | `AdaptiveMaternExpoLCBBO` (candidate 90, generation 8) | `GradientForestHybridUCBBO` (candidate 91, generation 8) |

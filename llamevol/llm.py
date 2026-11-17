@@ -20,6 +20,8 @@ class LLMClientResponse:
         self._response_token_count = 0
         self.error = None
         self.finish_reason = None
+        # reasoning text of thinking models (e.g. qwen3 with think=True), only kept for the logs
+        self.thinking = None
 
     @property
     def prompt_token_count(self):
@@ -64,9 +66,11 @@ class OllamaClient(LLMClient):
     # Uses the native Ollama api (/api/chat). The OpenAI compatible endpoint of Ollama ignores
     # the context length, so long prompts (population summary + code) would be cut silently
     # to the default context. Here num_ctx is passed explicitly.
-    def __init__(self, model_name, base_url, num_ctx):
+    def __init__(self, model_name, base_url, num_ctx, think=None):
         super().__init__(model_name, base_url)
         self.num_ctx = num_ctx
+        # True/False switches the thinking mode of models such as qwen3 on/off, None = model default
+        self.think = think
 
     def raw_completion(self, messages, **kwargs):
         options = {"num_ctx": self.num_ctx}
@@ -75,12 +79,15 @@ class OllamaClient(LLMClient):
         if "max_tokens" in kwargs:
             options["num_predict"] = kwargs["max_tokens"]
         payload = {"model": self.model_name, "messages": messages, "stream": False, "options": options}
+        if self.think is not None:
+            payload["think"] = self.think
         try:
             response = requests.post(self.base_url + "/api/chat", json=payload, timeout=kwargs.get("timeout", 600))
             response.raise_for_status()
             json_res = response.json()
             res = LLMClientResponse(json_res)
             res.text = json_res["message"]["content"]
+            res.thinking = json_res["message"].get("thinking")
             res.prompt_token_count = json_res.get("prompt_eval_count")
             res.response_token_count = json_res.get("eval_count")
             res.finish_reason = json_res.get("done_reason")
@@ -95,8 +102,8 @@ class OllamaClient(LLMClient):
 
 
 class LLMmanager:
-    def __init__(self, model_name: str, base_url: str = "http://localhost:11434", num_ctx: int = 32768):
-        self.client = OllamaClient(model_name, base_url, num_ctx)
+    def __init__(self, model_name: str, base_url: str = "http://localhost:11434", num_ctx: int = 32768, think=None):
+        self.client = OllamaClient(model_name, base_url, num_ctx, think)
         self.mock_res_provider: Callable[..., str] = None
         # how often and how long we wait when the request fails (server busy, timeout, ...)
         self.max_api_retries = 30

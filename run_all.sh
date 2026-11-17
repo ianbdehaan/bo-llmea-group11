@@ -1,5 +1,6 @@
 #!/bin/bash
-# Runs the whole experiment: both LLaMEA searches in parallel, then the stage 2 benchmark and the plots.
+# Runs the whole experiment: both LLaMEA searches in parallel, the reproducibility check, the stage 2
+# benchmark, the plots and the diversity analysis.
 # Usage: bash run_all.sh   (logs go to logs/). Finished parts are skipped/resumed when it is started again.
 cd "$(dirname "$0")"
 mkdir -p logs
@@ -23,3 +24,6 @@ echo "$(date) stage 2 finished (exit $?)"
 
 $PY run_analysis_plots.py > logs/plots.log 2>&1
 echo "$(date) plots finished (exit $?)"
+
+$PY analyze_diversity.py outputs > logs/diversity.log 2>&1
+echo "$(date) diversity analysis finished (exit $?)"

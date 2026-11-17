@@ -91,6 +91,9 @@ class LLaMEvol:
         response_handler.prompt = session_messages[1]["content"]
         response_handler.llm_model = llm.model_name()
         response_handler.raw_response = res_content
+        # Group 11 change: keep the reasoning of thinking models in the logs (it is not part of the answer)
+        if getattr(response, "thinking", None):
+            response_handler.raw_response = f"# Thinking (reasoning of the model, not part of the answer)\n{response.thinking}\n\n# Answer\n{res_content}"
 
         if not response_handler.code or not response_handler.code_name:
             err = NoCodeException("ExtractionError: No code extracted from the model.\n" + "\n".join(failed_tries))

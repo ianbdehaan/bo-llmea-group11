@@ -19,7 +19,7 @@ targets:
 stage1_generation:
   outer_budget: 100          # max candidate algorithms per search
   inner_budget: 60           # 10 * d evaluations per run, including the initial design
-  prompt_variant: "baseline"  # "baseline": LLaMEA-BO prompts, "diverse": design space + random mutation operators
+  prompt_variant: "diverse"  # "baseline": LLaMEA-BO prompts, "diverse": design space + random mutation operators
   metric: "AOCC"             # the evaluator ranks candidates by log-scale AOCC, mean over the 10 seeds
   eval_workers: 10           # the 10 seeds of a candidate run in parallel processes (0 = sequential)
   eval_timeout_seconds: 120  # a candidate whose 10 parallel runs take longer than this fails (keeps a search at a few hours)
@@ -30,9 +30,10 @@ stage1_generation:
     n_retry: 3               # re-prompts when the answer contains no code
   llm:
     # Qwen3-Coder-30B-A3B-Instruct (open weights, Q4_K_M) served by Ollama on the machine itself
-    model_name: "qwen3-coder:latest"
+    model_name: "qwen3:32b"
     ollama_url: "http://localhost:11434"
     num_ctx: 32768           # context length in tokens (prompt + answer)
+    think: true              # thinking mode of qwen3 (reasoning before the answer, saved in the logs)
     temperature: 0.8
     max_tokens: 16384        # max generated tokens per answer
     timeout_seconds: 900     # per request

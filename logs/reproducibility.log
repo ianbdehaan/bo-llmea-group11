@@ -1,7 +1,447 @@
 /var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
   warnings.warn(
-NovelBayesianOptimizationBO on problem 8, seed 110: reproducible (final best 207.44 vs 207.44)
-NovelBayesianOptimizationBO on problem 1124, seed 110: reproducible (final best 7.87174 vs 7.87174)
-AEBO_SB on problem 8, seed 110: reproducible (final best 988.421 vs 988.421)
-AEBO_SB on problem 1124, seed 110: reproducible (final best 4.57298 vs 4.57298)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/outputs_qwen32/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py:25: UserWarning: The balance properties of Sobol' points require n to be a power of 2.
+  samples = sampler.random(n=n_points)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/sklearn/base.py:1403: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+  return fit_method(estimator, *args, **kwargs)
+AdaptiveMaternExpoLCBBO on problem 8, seed 110: reproducible (final best 593.333 vs 593.333)
+AdaptiveMaternExpoLCBBO on problem 1124, seed 110: reproducible (final best 3.1092 vs 3.1092)
+GradientForestHybridUCBBO on problem 8, seed 110: reproducible (final best 7652.84 vs 7652.84)
+GradientForestHybridUCBBO on problem 1124, seed 110: reproducible (final best 2.11034 vs 2.11034)
 All algorithms reproducible.

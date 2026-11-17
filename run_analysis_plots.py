@@ -12,6 +12,7 @@ from scipy.stats import mannwhitneyu
 import ioh
 
 from analysis.plot_search_res import plot_search_result
+from llamevol.evaluator.evaluator_result import ConvergenceCurveAnalyzer
 
 
 def load_targets(cfg):
@@ -167,25 +168,46 @@ def plot_stage2_convergence(targets, cfg, out_base):
     stage2_statistics(df_raw, targets, order, names, budget, out_base)
 
 
+def run_aocc(curve, f_opt):
+    # AOCC of one run, computed exactly as the stage 1 fitness (log10 scale, loss clipped to [1e-8, 1e9])
+    analyzer = ConvergenceCurveAnalyzer(max_y=1e9, min_y=1e-8, log_scale=True, shift_value=f_opt)
+    return analyzer.calculate_aoc(np.asarray(curve, dtype=float))
+
+
+def test_against_best(values, best):
+    # two-sided Wilcoxon rank-sum (Mann-Whitney U) test of every method against the best one,
+    # 10 runs vs 10 runs, with the Holm correction over the methods of one problem
+    p_values = {a: (np.nan if a == best else mannwhitneyu(values[a], values[best], alternative='two-sided').pvalue) for a in values}
+    others = sorted([a for a in values if a != best], key=lambda a: p_values[a])
+    holm, running_max = {}, 0.0
+    for k, a in enumerate(others):
+        running_max = max(running_max, min(1.0, (len(others) - k) * p_values[a]))
+        holm[a] = running_max
+    return p_values, holm
+
+
 def stage2_statistics(df_raw, targets, order, names, budget, out_base):
-    # final performance per problem and a two-sided Wilcoxon rank-sum (Mann-Whitney U) test of every
-    # method against the method with the best median, 10 runs vs 10 runs, Holm correction per problem
+    # two views of the stage 2 runs per problem:
+    # the final value after the full budget (loss for BBOB, objective for the real-world problem, lower is better)
+    # and the AOCC of the whole run (anytime performance, the same metric as in stage 1, higher is better)
     rows = []
     for target in targets.values():
-        final = df_raw[(df_raw['Problem'] == target['stage2_label']) & (df_raw['Evaluation'] == budget)]
+        runs = df_raw[df_raw['Problem'] == target['stage2_label']]
+        final = runs[runs['Evaluation'] == budget]
         if final.empty:
             continue
-        values = {a: final[final['Algorithm'] == a]['Best_So_Far'].values - target['f_opt'] for a in order}
+        values = {a: final[final['Algorithm'] == a].sort_values('Seed')['Best_So_Far'].values - target['f_opt'] for a in order}
         values = {a: v for a, v in values.items() if len(v) > 0}
-        best = min(values, key=lambda a: np.median(values[a]))
-        p_values = {a: (np.nan if a == best else mannwhitneyu(values[a], values[best], alternative='two-sided').pvalue) for a in values}
+        aoccs = {}
+        for a in values:
+            algo_runs = runs[runs['Algorithm'] == a]
+            aoccs[a] = np.array([run_aocc(r.sort_values('Evaluation')['Best_So_Far'].values, target['f_opt'])
+                                 for _, r in algo_runs.groupby('Seed')])
 
-        # Holm correction of the p-values of this problem
-        others = sorted([a for a in values if a != best], key=lambda a: p_values[a])
-        holm, running_max = {}, 0.0
-        for k, a in enumerate(others):
-            running_max = max(running_max, min(1.0, (len(others) - k) * p_values[a]))
-            holm[a] = running_max
+        best = min(values, key=lambda a: np.median(values[a]))
+        p_values, holm = test_against_best(values, best)
+        best_aocc = max(aoccs, key=lambda a: np.median(aoccs[a]))
+        p_aocc, holm_aocc = test_against_best(aoccs, best_aocc)
 
         for a, v in values.items():
             rows.append({
@@ -196,10 +218,13 @@ def stage2_statistics(df_raw, targets, order, names, budget, out_base):
                 'median': np.median(v), 'min': v.min(), 'max': v.max(), 'runs': len(v),
                 'p_vs_best': p_values[a], 'p_vs_best_holm': holm.get(a, np.nan),
                 'best_median': a == best,
+                'aocc_mean': aoccs[a].mean(), 'aocc_std': aoccs[a].std(ddof=1), 'aocc_median': np.median(aoccs[a]),
+                'aocc_p_vs_best_holm': holm_aocc.get(a, np.nan),
+                'best_aocc_median': a == best_aocc,
             })
     stats_df = pd.DataFrame(rows).sort_values(['problem', 'median'])
     stats_df.to_csv(out_base / 'stage2_statistics.csv', index=False)
-    print('\nStage 2 final performance (p-values: Wilcoxon rank-sum vs best median, Holm corrected)')
+    print('\nStage 2 final value and AOCC (p-values: Wilcoxon rank-sum vs best median, Holm corrected)')
     print(stats_df.to_string(index=False, float_format=lambda x: f'{x:.4g}'))
 
 

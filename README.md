@@ -8,43 +8,41 @@ This repository contains the implementation and evaluation for the **Bayesian Op
 | BBOB target | F8 (Rosenbrock, original), instance 1, $d = 6$ |
 | Real-world target | Practical problem 1124 (parameter estimation of frequency modulated sound waves), $d = 6$ |
 | Stage 1 | 100 candidate algorithms per search, 60 evaluations per run, 10 runs (seeds 110–119), ranked by AOCC |
-| Stage 2 | 4 methods × 2 problems × 10 seeds × 600 evaluations |
-| LLM | Qwen3-Coder-30B-A3B-Instruct (open weights, Q4_K_M) served locally with Ollama |
+| Stage 2 | 4 methods × 2 problems × 10 seeds × 600 evaluations, compared by final value and by AOCC |
+| LLM | Qwen3-32B (open weights, Q4_K_M) with thinking mode, served locally with Ollama |
 
 ## 1. Repository structure
 
 ```text
-├── configs.yaml               # all experiment settings (seeds, budgets, LLM, population, stage 2)
-├── run_all.sh                 # runs everything: both stage 1 searches, reproducibility check, stage 2, plots
+├── configs.yaml               # all experiment settings (seeds, budgets, LLM, prompt, population, stage 2)
+├── run_all.sh                 # runs everything: both stage 1 searches, reproducibility check, stage 2, plots, diversity
 ├── stage1_run.py              # stage 1: one LLaMEA search per target (resumable)
 ├── stage2_benchmark.py        # stage 2: 4 methods x 2 problems x 10 seeds (resumable)
 ├── check_reproducibility.py   # runs each best algorithm twice with the same seed and compares
-├── run_analysis_plots.py      # stage 1 AOCC plots and stage 2 convergence plots
+├── run_analysis_plots.py      # stage 1 AOCC plots, stage 2 convergence plots and statistics
 ├── analyze_diversity.py       # component and code diversity of the LLaMEA searches (section 11)
-├── configs_diverse.yaml       # alternative experiment: same settings, "diverse" prompts (section 11)
-├── run_diverse.sh             # runs the alternative experiment
 ├── requirements.txt           # exact package versions
 ├── llamevol/                  # LLaMEA-BO framework (adapted, see section 6)
 ├── misc/                      # AOCC helpers from LLaMEA-BO
 ├── analysis/                  # plotting helpers from LLaMEA-BO
 ├── baseline/                  # BoTorch vanilla BO baseline (provided by the instructors)
 ├── Practical_Problems/        # real-world problem suite (provided by the instructors)
-├── logs/                      # console logs of our runs (stage 1 searches, reproducibility check, stage 2, plots)
-├── logs_diverse/              # console logs of the alternative experiment
-├── outputs_diverse/           # results of the alternative experiment, same structure as outputs/
+├── logs/                      # console logs of our runs (stage 1 searches, reproducibility check, stage 2, plots, diversity)
 └── outputs/
     ├── bbob_f8/               # stage 1 search on F8: best algorithm, checkpoint, full search log
     ├── real_world_1124/       # stage 1 search on problem 1124: same structure
     ├── stage2_benchmark/      # stage 2: one csv per run (runs/), combined csv, final summary
-    │                          # (runs_time_limited_1h/: first attempt with a 1 h limit, see 10.3)
-    └── convergence_analysis/  # all figures
+    │                          # (runs_thread_crash/: 5 runs that crashed because of the machine, see 10.4)
+    └── convergence_analysis/  # all figures and tables
 ```
 
-Each stage 1 search folder `outputs/<target>/ESPopulation_<name>_<timestamp>/` contains for every candidate `<generation>-<index>_<name>_<AOCC>.py` (code), `_prompt.md` (system prompt + prompt), `_respond.md` (LLM answer + evaluation feedback or error) and `_handler.pkl`, plus `history.jsonl` with one line per candidate (generation, parents, prompt, response, code, error, AOCC of each of the 10 runs, run time, token counts) and the final population pickle.
+Each stage 1 search folder `outputs/<target>/ESPopulation_<name>_<timestamp>/` contains for every candidate `<generation>-<index>_<name>_<AOCC>.py` (code), `_prompt.md` (system prompt + prompt), `_respond.md` (the reasoning of the model, its answer and the evaluation feedback or error) and `_handler.pkl`, plus `history.jsonl` with one line per candidate (generation, parents, prompt, response, code, error, AOCC of each of the 10 runs, run time, token counts) and the final population pickle.
+
+The runs were made with the config file under the name `configs_qwen32.yaml` and the output folder `outputs_qwen32/`, which were renamed to `configs.yaml` and `outputs/` afterwards (only the `save_dir` line changed), so these names still appear in the logs.
 
 ## 2. Environment setup
 
-Python 3.12 (3.11+ works). All code runs on the CPU; a GPU is only used by the LLM server.
+Python 3.12 (3.11+ works). All optimization code runs on the CPU; a GPU is only used by the LLM server.
 
 ```bash
 python -m venv .venv
@@ -64,19 +62,19 @@ numpy is pinned to 2.3.5: from numpy 2.4 on, `float()` of an array with shape `(
 
 ## 3. Configure the LLM
 
-We use **Qwen3-Coder-30B-A3B-Instruct** (open weights, free) served locally with Ollama: the Ollama model `qwen3-coder:latest`, a mixture of experts model with 30.5B parameters (3.3B active), quantized to Q4_K_M (≈19 GB; with a 32K context it needs ≈22 GB of GPU memory). No api key is needed and there are no rate limits. We chose it because it is free and open weight (as the assignment requires), specialised for code, answers without long hidden reasoning (so the answer is not cut off before the code, unlike reasoning models with a token limit), and fast enough on one RTX 3090 (≈ 85 tokens/s) to run both searches within a few hours; it was released in July 2025, so newer models exist, but the choice was limited to models that run locally on the available hardware.
+We use **Qwen3-32B** (open weights, free) served locally with Ollama: the Ollama model `qwen3:32b`, a dense model with 32.8B parameters quantized to Q4_K_M (≈ 20 GB), with its **thinking mode** switched on, so the model reasons about the design before it writes the answer (≈ 35 tokens/s on an RTX 3090). No api key is needed and there are no rate limits. We chose it because it is free and open weight (as the assignment requires), it is the largest general model that runs at a usable speed on the available GPUs, and the reasoning step suits a task where the model has to combine several design decisions into working code; in preliminary runs the smaller Qwen3-Coder-30B-A3B (no thinking) was about 3 times faster per answer and produced more working code, but Qwen3-32B found the best algorithm on the real-world problem (on F8 the preliminary runs found better algorithms). The price is speed: with the reasoning, an answer has ≈ 4,600 tokens on average, and one search takes ≈ 7.5 h.
 
 ```bash
 # on the machine with the GPU (https://ollama.com/download)
-ollama pull qwen3-coder
+ollama pull qwen3:32b
 ollama serve            # usually already running as a service on localhost:11434
 ```
 
-The model is configured in `configs.yaml` under `stage1_generation.llm`: `model_name` (Ollama model name), `ollama_url` (server address) and `num_ctx` (context length). `llamevol/llm.py` talks to the native Ollama api (`/api/chat`) and passes the context length explicitly, because the OpenAI compatible endpoint of Ollama silently uses a short default context and would cut long prompts. Any other model available in Ollama can be used by changing `model_name`.
+The model is configured in `configs.yaml` under `stage1_generation.llm`: `model_name` (Ollama model name), `ollama_url` (server address), `num_ctx` (context length) and `think` (thinking mode on/off; leave it out for models without a thinking mode). `llamevol/llm.py` talks to the native Ollama api (`/api/chat`) and passes the context length explicitly, because the OpenAI compatible endpoint of Ollama silently uses a short default context and would cut long prompts. The reasoning text of the model is only saved in the logs (`_respond.md`, `history.jsonl`); only the answer is used to extract the code. Any other model available in Ollama can be used by changing `model_name`.
 
 ## 4. Running the experiments
 
-Everything (both searches in parallel, the reproducibility check, stage 2 and the plots) in one command, logs go to `logs/`:
+Everything (both searches in parallel, the reproducibility check, stage 2, the plots and the diversity analysis) in one command, logs go to `logs/`:
 
 ```bash
 bash run_all.sh
@@ -90,11 +88,12 @@ python stage1_run.py --target real_world    # LLaMEA search on problem 1124
 python check_reproducibility.py             # same seed twice -> same result for both best algorithms?
 python stage2_benchmark.py                  # generalization benchmark
 python run_analysis_plots.py                # figures and tables in outputs/convergence_analysis/
+python analyze_diversity.py outputs         # diversity of the two searches
 ```
 
-The alternative experiment of section 11 runs with `bash run_diverse.sh` (all scripts accept the config file, e.g. `python stage1_run.py --config configs_diverse.yaml --target bbob`).
+All scripts read `configs.yaml`; another config file can be given with `--config <file>` (stage 1 and 2) or as the last argument (`run_analysis_plots.py <file>`, `check_reproducibility.py <n_evals> <file>`).
 
-`run_analysis_plots.py` reads `configs.yaml` and writes to `outputs/convergence_analysis/`:
+`run_analysis_plots.py` writes to `outputs/convergence_analysis/`:
 
 | File | Content |
 |:---|:---|
@@ -103,9 +102,9 @@ The alternative experiment of section 11 runs with `bash run_diverse.sh` (all sc
 | `stage1_<target>/es_aoc_lines.png`, `search_aoc_voilin.png`, `overall_error_rate_voilin.png` | LLaMEA-BO plots: AOCC per generation, distribution, error rate |
 | `stage2_bbob_loss_convergence.png/pdf` | BBOB: best-so-far loss $f - f_{opt}$ vs evaluations, mean ± standard error over the 10 runs |
 | `stage2_realworld_objective_convergence.png/pdf` | real-world problem: best-so-far objective vs evaluations, mean ± standard error |
-| `stage2_statistics.csv` | final performance after 600 evaluations per method and problem (mean, std, SE, median, min, max) and a two-sided Wilcoxon rank-sum test (10 vs 10 runs) of every method against the method with the best median, Holm corrected per problem |
+| `stage2_statistics.csv` | per method and problem: the final value after 600 evaluations (mean, std, SE, median, min, max) and the AOCC of the runs (mean, std, median), each with a two-sided Wilcoxon rank-sum test (10 vs 10 runs) against the best method (best median), Holm corrected per problem |
 
-`outputs/stage2_benchmark/stage2_final_performance.csv` (written by stage 2) has the same summary without the tests.
+`outputs/stage2_benchmark/stage2_final_performance.csv` (written by stage 2) has the final value summary without the tests. `analyze_diversity.py` writes `outputs/convergence_analysis/diversity.csv`.
 
 Both stages can be interrupted and started again with the same command: stage 1 continues from `outputs/<target>/checkpoint_population.pkl` (saved after every generation), stage 2 skips runs whose csv already exists in `outputs/stage2_benchmark/runs/`. To start a search from scratch, delete its `outputs/<target>/` folder.
 
@@ -124,27 +123,33 @@ All settings are in `configs.yaml`:
 | targets.* | `description` | text | problem description inserted in the prompt |
 | stage1_generation | `outer_budget` | 100 | candidate algorithms per search |
 | stage1_generation | `inner_budget` | 60 | evaluations per run (10·d), including the initial design |
+| stage1_generation | `prompt_variant` | `diverse` | `diverse`: design space + random mutation operators (below); `baseline`: the original LLaMEA-BO prompts |
 | stage1_generation | `eval_workers` | 10 | the 10 runs of a candidate in parallel processes |
 | stage1_generation | `eval_timeout_seconds` | 120 | a candidate whose 10 runs take longer fails |
 | population | `n_parent`, `n_offspring`, `use_elitism` | 4, 12, true | (4 + 12) elitist ES of LLaMEA-BO |
 | population | `n_retry` | 3 | re-prompts if the answer contains no code |
-| llm | `model_name`, `ollama_url`, `num_ctx` | `qwen3-coder:latest`, `http://localhost:11434`, 32768 | see section 3 |
+| llm | `model_name`, `ollama_url`, `num_ctx`, `think` | `qwen3:32b`, `http://localhost:11434`, 32768, true | see section 3 |
 | llm | `temperature` | 0.8 | sampling temperature |
-| llm | `max_tokens` | 16384 | max generated tokens per answer |
+| llm | `max_tokens` | 16384 | max generated tokens per answer (reasoning + answer); no answer reached it |
 | llm | `timeout_seconds`, `max_api_retries`, `max_wait_seconds` | 900, 30, 3600 | request timeout and retry/backoff of failed requests |
 | stage2_generalization | `evaluation_budget` | 600 | evaluations per run (100·d), including the initial design |
 | stage2_generalization | `workers` | 40 | parallel runs |
-| stage2_generalization | `run_time_limit_seconds` | 10800 | safety limit: a generated algorithm run is stopped after 3 h (status in the csv); no final run reached it |
-| stage2_generalization.botorch | `n_doe`, `acquisition_function` | 12, EI | Sobol initial design of 2·d points, expected improvement |
+| stage2_generalization | `run_time_limit_seconds` | 10800 | safety limit: a generated algorithm run is stopped after 3 h (status in the csv); no run reached it |
+| stage2_generalization.botorch | `n_doe`, `acquisition_function` | 12, EI | initial design of 2·d points, expected improvement |
 | stage2_generalization.cma_es | `sigma0_fraction` | 0.2 | σ0 = 0.2·(ub − lb) = 2, uniform random x0, restarts if CMA-ES stops early |
 
-**Prompts.** The prompts are built in `llamevol/prompt_generators/bl_prompt_generator.py` (`BaselinePromptGenerator` with `is_bo = True`, the LLaMEA-BO baseline prompt). The task description is `__bo_task_description`, the code template is `__bo_code_structure`, the answer format (`# Description / # Justification / # Code`) is `response_format`, and the feedback after an evaluation is `evaluation_feedback_prompt` (mean and std of the AOCC and the run time). Two parts are set from `stage1_run.py`: `reproducibility_prompt` and `runtime_prompt` (section 6). Mutation and crossover prompts include the parent code and a summary of the current population.
+**Prompts.** The prompts are built in `llamevol/prompt_generators/bl_prompt_generator.py` (`BaselinePromptGenerator` with `is_bo = True`, the LLaMEA-BO prompt). The task description is `__bo_task_description`, the code template is `__bo_code_structure`, the answer format (`# Description / # Justification / # Code`) is `response_format`, and the feedback after an evaluation is `evaluation_feedback_prompt` (mean and std of the AOCC and the run time). Two parts are set from `stage1_run.py`: `reproducibility_prompt` and `runtime_prompt` (section 6). Mutation and crossover prompts include the parent code and a summary of the current population.
+
+The original LLaMEA-BO mutation prompt always asks to *"Refine the strategy of the selected solution to improve it."*, which tends to keep the search on one design. We use a variant for more diverse algorithms (`prompt_variant: "diverse"`, `DESIGN_SPACE` and `DIVERSE_MUTATIONS` in the same file):
+
+1. The task description lists alternatives for every BO component (initial design, surrogate model, acquisition function, acquisition optimizer, exploration strategy), e.g. random forests, ARD kernels, log-transformed y, lower confidence bound, Thompson sampling, L-BFGS-B or differential evolution, TuRBO-like trust regions and restarts, and asks not to always use the same default choices.
+2. Every mutation uses one of three operators, chosen at random (Python `random.Random(110)`, so the sequence is reproducible): **refine** (the original text), **replace component** (replace one randomly chosen component by a substantially different alternative from the list) or **new idea** (design an algorithm whose main idea differs from the whole population). The chosen operator is part of the saved prompt of each candidate.
 
 **Selection metric (AOCC).** Every candidate is run once per seed (110–119) with 60 evaluations. For each run the evaluator (`ConvergenceCurveAnalyzer` in `llamevol/evaluator/evaluator_result.py`, as in LLaMEA-BO) takes the best-so-far curve of the loss $f(x_t) - f_{opt}$, clips it to $[10^{-8}, 10^{9}]$ (LLaMEA-BO uses the upper bound $10^9$ for $d > 5$), scales it on a log10 scale to $[0, 1]$ and computes
 
 $$\text{AOCC} = 1 - \int_0^1 \frac{\log_{10} \text{clip}(\min_{s \le t} f(x_s) - f_{opt}) - \log_{10} 10^{-8}}{\log_{10} 10^{9} - \log_{10} 10^{-8}} \, dt$$
 
-with the trapezoidal rule over the evaluations (1 is best). The fitness of a candidate is the mean AOCC over the 10 runs; candidates that crash, exceed the budget or time out get AOCC 0. For BBOB F8, $f_{opt}$ is the known optimum of instance 1 ($f_{opt} = 149.15$, `ioh.get_problem(8, 1, 6).optimum.y`). For problem 1124 the optimum is unknown and the suite uses $f_{opt} = 0$ (the objective is a sum of squared errors between the generated and the target sound wave, so it is non-negative and 0 means a perfect fit), so its AOCC is computed on the raw objective. The best algorithm of each search is selected only by its AOCC on its own target.
+with the trapezoidal rule over the evaluations (1 is best). The fitness of a candidate is the mean AOCC over the 10 runs; candidates that crash, exceed the budget or time out get AOCC 0. For BBOB F8, $f_{opt}$ is the known optimum of instance 1 ($f_{opt} = 149.15$, `ioh.get_problem(8, 1, 6).optimum.y`). For problem 1124 the optimum is unknown and the suite uses $f_{opt} = 0$ (the objective is a sum of squared errors between the generated and the target sound wave, so it is non-negative and 0 means a perfect fit), so its AOCC is computed on the raw objective. The best algorithm of each search is selected only by its AOCC on its own target. In stage 2 the same AOCC is computed for every run with 600 evaluations (`run_analysis_plots.py`), so the methods are also compared on their anytime performance.
 
 **Generated algorithms.** Their hyperparameters (initial design size, kernel, acquisition settings, trust region constants) are constants in `__init__` of the generated files `outputs/<target>/best_*.py` and can be edited there.
 
@@ -152,30 +157,33 @@ with the trapezoidal rule over the evaluations (1 is best). The fitness of a can
 
 The `llamevol/` package is LLaMEA-BO (see credits). All our changes are marked with `# Group 11 change` in the code.
 
-1. **LLM client** (`llamevol/llm.py`). The original file has clients for many api providers; we replaced them with a single client for the native Ollama api that sets the context length explicitly. A failed request (server busy, timeout) was originally returned at once and the candidate became an empty, failed candidate; now it is retried with exponential backoff, so only real answers of the LLM count as candidates.
-2. **Reason of every failed try in the logs** (`llamevol/llamevol.py`). The request error or the finish reason (e.g. `length` when `max_tokens` is used up) is stored in the error of the candidate, so it appears in `_respond.md` and `history.jsonl`.
+1. **LLM client** (`llamevol/llm.py`). The original file has clients for many api providers; we replaced them with a single client for the native Ollama api that sets the context length and the thinking mode explicitly. A failed request (server busy, timeout) was originally returned at once and the candidate became an empty, failed candidate; now it is retried with exponential backoff, so only real answers of the LLM count as candidates.
+2. **Reasoning and reason of every failed try in the logs** (`llamevol/llamevol.py`). The reasoning of the model is saved before its answer in `_respond.md` and `history.jsonl`. The request error or the finish reason (e.g. `length` when `max_tokens` is used up) is stored in the error of the candidate.
 3. **Complete search history** (`population.py`). Every candidate is appended to `history.jsonl`, and the population is checkpointed after every generation so a search can be resumed (`stage1_run.py` moves the files of an unfinished generation to `discarded_unfinished_generation/`).
 4. **Budget check** (`ioh_evaluator.py`). The over-budget check used `> budget`, which allowed 61 evaluations in a 60 evaluation run; now `>= budget`.
-5. **Timeout really stops a candidate** (`ioh_evaluator.py`). After a timeout the executor waited for the running processes, so a hanging candidate blocked the search. Now the worker processes are terminated. Together with `eval_timeout_seconds` this keeps one search at a few hours.
+5. **Timeout really stops a candidate** (`ioh_evaluator.py`). After a timeout the executor waited for the running processes, so a hanging candidate blocked the search. Now the worker processes are terminated.
 6. **Parallel evaluation in processes** (`stage1_run.py`). The 10 runs of a candidate run in 10 processes (threads would share the global `np.random` state that is seeded per run).
 7. **Reproducibility rule in the prompt** (`reproducibility_prompt`). The evaluator seeds `np.random` and `torch` before each run, but generated code often creates unseeded generators (e.g. `qmc.Sobol(scramble=True)`), so the same seed gave different results. The prompt now asks to derive every generator from `np.random`; `check_reproducibility.py` confirms that both best algorithms are reproducible.
 8. **Run time rule in the prompt** (`runtime_prompt`). Tells the LLM about the timeout and that the algorithm is later run with 600 evaluations, so it should not become too expensive per iteration.
 9. **Problem description.** The original prompt said "evaluated on the BBOB test suite of ..." also for the real-world problem; it now uses the description from `configs.yaml`.
-10. **Real-world problems and seeds in the evaluator** (`ioh_evaluator.py`). LLaMEA-BO only supports BBOB functions; problem ids ≥ 1000 now load the practical problem from `Practical_Problems/`, dimension 6 is allowed, and every run seeds `np.random` and `torch` with its own seed (110–119) instead of using unseeded runs.
+10. **Diverse prompt variant** (`bl_prompt_generator.py`, section 5). Design space in the task description and random mutation operators.
+11. **Real-world problems and seeds in the evaluator** (`ioh_evaluator.py`). LLaMEA-BO only supports BBOB functions; problem ids ≥ 1000 now load the practical problem from `Practical_Problems/`, dimension 6 is allowed, and every run seeds `np.random` and `torch` with its own seed (110–119) instead of using unseeded runs.
 
 ## 7. Randomness and reproducibility
 
 * Every run (stage 1 and 2) seeds `random`, `np.random` and `torch` with its seed from 110–119 before the algorithm is created. BoTorch gets `random_seed=seed`, CMA-ES `seed=seed` (and `seed + evaluations used` on a restart).
-* `check_reproducibility.py` runs both best algorithms twice per problem with seed 110 and checks that the results are identical (result in `logs/reproducibility.log`).
-* **Not controlled:** the LLM sampling (temperature 0.8, no seed), so a new search gives different algorithms; the order in which parallel candidates finish does not change the result. Floating point results of BLAS libraries can differ between machines/library versions.
+* `check_reproducibility.py` runs both best algorithms twice per problem with seed 110 and checks that the results are identical; both are reproducible (`logs/reproducibility.log`).
+* The choice of the mutation operator uses its own seeded generator (`random.Random(110)`).
+* **Not controlled:** the LLM sampling (temperature 0.8, no seed), so a new search gives different algorithms. Floating point results of BLAS libraries can differ between machines/library versions; the 5 stage 2 runs that were repeated on another machine (section 10.4) gave exactly the same results as the original machine for the runs we compared.
 
 ## 8. Machines
 
 | Machine | Used for | Hardware | Software |
 |:---|:---|:---|:---|
 | vibranium.liacs.nl (LIACS REL Compute) | stage 1 (LLM + evaluation), stage 2, plots | 2× Intel Xeon Silver 4214R @ 2.40 GHz (48 threads), 251 GB RAM, 2× NVIDIA GeForce RTX 3090 (24 GB), driver 615.71 | Rocky Linux 9.8, Python 3.12, torch 2.15.0+cpu, Ollama 0.32.5 |
+| local PC | the 5 repeated stage 2 runs (section 10.4), final plots and tables | AMD Custom APU 0405 (8 threads) | Arch Linux, the same Python packages (`requirements.txt`) |
 
-Run times on this machine: stage 1 BBOB search 1 h 51 min and real-world search 1 h 20 min (in parallel, 10 cores each, sharing the LLM), stage 2 about 1 h 15 min with 40 parallel runs (the slowest method needs ≈ 65 min per run).
+Run times on vibranium: the two stage 1 searches ran in parallel (10 cores each, sharing the LLM) and took 7 h 33 min (BBOB) and 7 h 12 min (real-world); almost all of this time is the LLM generating the reasoning and the answer. Stage 2 took 1 h 16 min with 40 parallel runs (the slowest method needs ≈ 67 min per run).
 
 The machine is shared with other users. The LLM was served by the machine's Ollama service on its GPUs; all optimization runs used one CPU core each (`OMP_NUM_THREADS=1`).
 
@@ -186,78 +194,66 @@ The machine is shared with other users. The LLM was served by the machine's Olla
 | | BBOB F8 search | Real-world 1124 search |
 |:---|:---|:---|
 | candidates (generations) | 100 (4 + 8 × 12) | 100 (4 + 8 × 12) |
-| failed candidates | 20 (5 timeouts, 5 syntax errors, 3 ValueError, 3 TypeError, 1 over budget, 3 other) | 22 (10 syntax errors, 4 NameError, 3 over budget, 2 IndexError, 2 ValueError, 1 TypeError) |
-| best AOCC in generation 0 → final | 0.333 → **0.350** | 0.448 → **0.460** |
-| best algorithm | `NovelBayesianOptimizationBO` (candidate 89, generation 8) | `AEBO_SB` (candidate 94, generation 8) |
-| lineage of the best (mutations) | #4 (gen 0, 0.333) → #20 (gen 2, 0.343) → #89 (gen 8, 0.350) | #2 `EGOABLBO` (0.449) → #24 → #47 → #62 `AEBO` (0.452) → #74 (0.455) → #84 → #94 `AEBO_SB` (0.460) |
-| LLM tokens (prompt / answer) | 397K / 323K | 358K / 279K |
-| wall clock time | 1 h 51 min | 1 h 20 min |
+| mutation operators used (refine / replace component / new idea / fix error) | 37 / 24 / 26 / 9 | 39 / 25 / 26 / 6 |
+| failed candidates | 51 (15 ValueError, 10 AttributeError, 7 TypeError, 7 NameError, 6 IndexError, 2 over budget, 2 timeouts, 2 other) | 45 (18 ValueError, 8 AttributeError, 5 TypeError, 5 over budget, 4 NameError, 2 IndexError, 1 timeout, 2 other) |
+| best AOCC per generation 0, 1, …, 8 | 0.294, 0.304, 0.312, 0.334, 0.328, 0.329, 0.339, 0.341, **0.353** | 0.475, 0.473, 0.477, 0.477, 0.474, 0.468, 0.492, 0.492, **0.495** |
+| best algorithm | `AdaptiveMaternExpoLCBBO` (candidate 90, generation 8) | `GradientForestHybridUCBBO` (candidate 91, generation 8) |
+| lineage of the best | #4 `DynamicLCBBO` (gen 0, 0.294) → #16 `ThompsonSamplingBO` → #19 (0.312) → #36 → #51 `TrustRegionEnsembleThompsonBO` (0.328) → #55 `DynamicLCBGPBO` (0.329) → #67 (0.339) → #90 (0.353) | #1 `SobolMaternEIBO` (gen 0, 0.475) → #12 `ThompsonSamplingMaternBO` → #27 (0.477) → #72 `TrustRegionThompsonEnsembleMaternBO` (0.492) → #91 (0.495) |
+| LLM tokens (prompt / reasoning + answer) | 299K / 462K | 288K / 464K |
+| wall clock time | 7 h 33 min | 7 h 12 min |
 
-The improvement during the searches is small (AOCC +0.017 and +0.012). Most of the gain comes from tuning the exploration/exploitation schedule; the LLM rarely changes the overall structure (GP + EI on a candidate pool) once a working design is in the population. The failure rate drops after the first generations because the elitist population only keeps working parents.
+About half of the candidates fail, almost all because of ordinary programming errors (wrong array shapes, invalid keyword arguments such as a non-existing `ard_kernel` argument of the sklearn `Matern` kernel, undefined names); the reasoning step does not prevent api mistakes. No answer was cut off by the token limit. Both searches keep improving until the last generation (+0.059 and +0.020 AOCC), and the lineages show that the algorithms change their structure along the way (e.g. Thompson sampling → trust region ensemble → LCB with a GP, or GP + EI → random forest), which is the effect of the replace component / new idea operators.
 
-### 9.2 BBOB F8: `NovelBayesianOptimizationBO`
+### 9.2 BBOB F8: `AdaptiveMaternExpoLCBBO`
 
-File: `outputs/bbob_f8/best_bbob_f8_NovelBayesianOptimizationBO.py`
-
-```text
-n_init = max(10, min(20, ceil(5·sqrt(d)))) = 13            # d = 6
-X, y  <- evaluate n_init Latin hypercube points in [-5, 5]^d
-batch <- 1 if budget <= 200 else ceil(4·max(0.1, 1 - 0.8·t/budget)) clipped to [1, 5]
-while evaluations + batch <= budget:
-    C   <- 50 LHS points  ∪  12 Gaussian perturbations of x_best (σ = min(1, 10·sqrt(d)/budget^0.6), clipped)
-    C   <- C ∪ LHS points until |C| >= 100
-    GP  <- fit GP(Constant × Matern 5/2) on (X, y), normalize_y, 5 optimizer restarts
-    a(x) = EI(x) · (0.5 + 0.5·(1 - (t/budget)^1.5))       # scaled EI
-    top <- 5 candidates with largest a(x)
-    GP is fitted again and the `batch` best of `top` are evaluated
-    update batch size (only for budget > 200; 1 for the last 50 evaluations)
-return best (y, x)
-```
-
-| Component | Choice | Compared with a standard BO pipeline |
-|:---|:---|:---|
-| Initial design | 13 LHS points (22 % of the 60 evaluation budget) | standard (2·d to 10·d space filling points) |
-| Surrogate | sklearn GP, Constant × Matern ν = 5/2 (isotropic length scale), noise 1e-6, `normalize_y`, ML-II with 5 restarts | standard, but refitted from scratch twice per iteration |
-| Acquisition | Expected improvement multiplied by a factor that decays from 1 to 0.5 over the budget | the factor multiplies EI by a constant per iteration, so it does **not** change which point is chosen; it is effectively plain EI |
-| Acquisition optimizer | no gradient optimizer: argmax over ~100 LHS points + 12 local perturbations around the incumbent | standard BO uses multi-start L-BFGS; here the local perturbations give a trust-region-like exploitation of the best point, which suits the narrow curved valley of Rosenbrock |
-| Batch | 1 point per iteration for budget ≤ 200 (stage 1); up to 4 points (top EI values, no fantasies) for budget 600 | batch selection without penalisation can pick nearby points |
-| Unused parts | `_model_selection` ("cross validation") only fits the same GP | LLM artefact |
-
-### 9.3 Real-world 1124: `AEBO_SB`
-
-File: `outputs/real_world_1124/best_real_world_1124_AEBO_SB.py` ("adaptive exploration BO with space-filling batches"; the class name contains "BO" but does not end with it).
+File: `outputs/bbob_f8/best_bbob_f8_AdaptiveMaternExpoLCBBO.py`
 
 ```text
-n_init = max(5, min(20, 2d)) = 12
-X, y  <- evaluate n_init scrambled Sobol points; GP <- fit
+n_init = 2d = 12 scrambled Sobol points
+GP <- fit GP(Matern 5/2 with one length scale per dimension), 2 optimizer restarts, no normalize_y
 while evaluations < budget:
-    explore <- evaluations <= 0.4·budget                       # first 40 % of the budget
-    batch   <- 1..5, larger (up to remaining/10) when the best value stopped improving
-    if explore or evaluations < 10:
-        evaluate `batch` new space filling points (LHS if batch <= 10, else Sobol)   # no model used
-    else:
-        C <- 100 scrambled Sobol points
-        a(x) = EI(x)                                              # GP posterior
-        evaluate the `batch` points of C with the largest a(x)
-    refit the GP when > 15 points and > 3 new evaluations since the last fit
-        (GP on a random subset of at most 100 points, 0 optimizer restarts)
+    kappa = 2 · exp(-0.5 · ln 2 · t/budget)              # 2 -> 1.41 over the budget
+    LCB(x) = mu(x) - kappa · sigma(x)
+    C   <- 150 scrambled Sobol points, take the 10 with the lowest LCB
+    run L-BFGS-B (30 iterations) on the LCB from each of the 10, keep the best result
+    evaluate it, refit the GP on all points
 return best (y, x)
 ```
 
 | Component | Choice | Compared with a standard BO pipeline |
 |:---|:---|:---|
-| Initial design | 12 Sobol points, then **pure space filling until 40 % of the budget** (24 of 60 evaluations) | much longer exploration phase than standard BO; the acquisition function `EI + σ` written for this phase is never used, because points are sampled without the model then |
-| Surrogate | sklearn GP, Constant × Matern 5/2 + white noise, `normalize_y`, **no restarts**, at most 100 (random) points | cheap: constant cost per fit even with 600 evaluations, but forgets most data at large budgets |
-| Acquisition | expected improvement | standard |
-| Acquisition optimizer | argmax over 100 random Sobol points | very coarse (random search on EI); no local refinement around the incumbent |
-| Batch | 1–5 points per iteration, bigger when progress stalls | top-k EI without diversity |
-| Robustness | failed evaluations get a penalty value 1e6 | |
+| Initial design | 12 Sobol points (20 % of the 60 evaluation budget) | standard |
+| Surrogate | sklearn GP, Matern ν = 5/2 with ARD length scales, noise 1e-6, **no output scale and no normalisation of y** | the GP has prior mean 0 and prior variance 1 whatever the scale of the objective |
+| Acquisition | lower confidence bound with a slowly decaying κ (2 → 1.41) | standard (GP-UCB style) |
+| Acquisition optimizer | 150 Sobol points, then multi-start L-BFGS-B from the 10 best | standard multi-start gradient optimisation |
+| Cost | GP refit with ARD and 2 restarts after every evaluation | the most expensive method (≈ 67 min per 600 evaluation run on F8) |
 
-On the FM sound wave problem (very multimodal, flat regions) a long space filling phase followed by coarse EI screening works well at 60 evaluations, which explains why the search converged to this exploratory design.
+### 9.3 Real-world 1124: `GradientForestHybridUCBBO`
+
+File: `outputs/real_world_1124/best_real_world_1124_GradientForestHybridUCBBO.py`
+
+```text
+n_init = max(2d+1, 20) = 20 Latin hypercube points, centre <- best of them, r <- 1
+while evaluations < budget:
+    every 3 iterations: RF <- random forest (50 trees, depth 10) on a random 80 % of the points
+    C   <- 100 uniform points in the box [centre - r, centre + r] (clipped)
+    a(x) = mean(x) + 0.2 · (95 % - 5 % quantile of the trees) + 0.4 · novelty(x)
+    evaluate the centres of 3 k-means clusters of the 30 % of C with the lowest a(x)
+    r <- max(0.8 r, 0.5)
+return best (y, x)
+```
+
+| Component | Choice | Compared with a standard BO pipeline |
+|:---|:---|:---|
+| Initial design | 20 LHS points (33 % of the 60 evaluation budget) | standard |
+| Surrogate | random forest, uncertainty from the spread of the tree predictions; 20 % of the data is held out for a validation that is never used | SMAC-like surrogate, cheap (≈ 20 s per 600 evaluation run) |
+| Acquisition | called "UCB", but the uncertainty and the novelty (distance to the data) are *added* to the mean and the lowest value is chosen, so uncertain and novel points are penalised | effectively a pessimistic (exploitative) acquisition |
+| Acquisition optimizer | 100 random points in a box, batch of 3 points from k-means centres of the best 30 % | batch selection with diversity |
+| Trust region | intended: move the centre to a new best point and grow the box, shrink otherwise. Because the new values are added to `y` before the comparison `min(new_y) < min(y)`, the condition is never true: **the centre stays at the best initial point and the box shrinks to its minimum (radius 0.5) after 4 iterations** (checked by running it) | in practice a local search in a fixed box of width 1 around the best of 20 random points |
 
 ### 9.4 Differences between the two
 
-The BBOB algorithm exploits: local perturbations around the incumbent and a short initial design, which suits the single curved valley of Rosenbrock. The real-world algorithm explores: 40 % of the budget is space filling and EI is only maximised over random points, which suits the rugged FM problem. Both keep the GP + EI core of standard BO but replace the gradient based acquisition optimizer with cheap candidate pools.
+The BBOB algorithm is a global, model-based method (GP with ARD + LCB + gradient based acquisition optimisation), while the real-world algorithm is, because of its trust region bug, a local random forest screened search around the best initial point. Both are standard components recombined by the LLM rather than new ideas, but they are structurally very different from each other, which is what the diverse prompt aimed at.
 
 ## 10. Results
 
@@ -271,144 +267,84 @@ All numbers below are produced by `stage2_benchmark.py` and `run_analysis_plots.
 
 Stage 1 search progress: `outputs/convergence_analysis/stage1_aocc_history.png` and the LLaMEA-BO plots in `outputs/convergence_analysis/stage1_*/`.
 
-### 10.2 Final performance after 600 evaluations
+### 10.2 Final value after 600 evaluations and AOCC
 
-Mean ± standard error over 10 runs, median, and the two-sided Wilcoxon rank-sum test against the method with the best median (Holm corrected per problem).
+Final value: mean ± standard error over 10 runs and median (lower is better). AOCC of the whole run of 600 evaluations, computed as in stage 1: mean ± std and median (higher is better). p: two-sided Wilcoxon rank-sum test against the best method of that column, Holm corrected per problem.
 
-| Problem | Method | Mean ± SE | Median | p vs best (Holm) |
-|:---|:---|:---:|:---:|:---:|
-| BBOB F8 (loss $f - f_{opt}$) | **CMA-ES** | **4.20 ± 0.32** | **4.39** | — |
-| | Generated on BBOB (`NovelBayesianOptimizationBO`) | 9.10 ± 0.90 | 8.68 | 0.0005 |
-| | BoTorch vanilla BO | 35.2 ± 5.1 | 37.0 | 0.0005 |
-| | Generated on real-world (`AEBO_SB`) | 288.5 ± 49.0 | 265.8 | 0.0005 |
-| Real-world 1124 (objective $f$) | **CMA-ES** | **1.84 ± 0.17** | **1.92** | — |
-| | Generated on BBOB (`NovelBayesianOptimizationBO`) | 2.22 ± 0.20 | 2.19 | 0.21 |
-| | BoTorch vanilla BO | 2.32 ± 0.15 | 2.29 | 0.18 |
-| | Generated on real-world (`AEBO_SB`) | 2.71 ± 0.14 | 2.66 | 0.007 |
+| Problem | Method | Final: mean ± SE | Final: median | p (final) | AOCC: mean ± std | AOCC: median | p (AOCC) |
+|:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|
+| BBOB F8 (loss $f - f_{opt}$) | **CMA-ES** | **4.20 ± 0.32** | **4.39** | — | **0.429 ± 0.019** | **0.436** | — |
+| | BoTorch vanilla BO | 35.2 ± 5.1 | 37.0 | 0.0005 | 0.414 ± 0.011 | 0.416 | 0.026 |
+| | Generated on BBOB (`AdaptiveMaternExpoLCBBO`) | 370 ± 121 | 267 | 0.0005 | 0.386 ± 0.029 | 0.379 | 0.003 |
+| | Generated on real-world (`GradientForestHybridUCBBO`) | 7721 ± 244 | 7975 | 0.0005 | 0.300 ± 0.003 | 0.299 | 0.0005 |
+| Real-world 1124 (objective $f$) | **Generated on real-world (`GradientForestHybridUCBBO`)** | **1.63 ± 0.14** | **1.75** | — | **0.513 ± 0.006** | **0.512** | — |
+| | Generated on BBOB (`AdaptiveMaternExpoLCBBO`) | 1.94 ± 0.13 | 1.89 | 0.62 | 0.507 ± 0.004 | 0.507 | 0.012 |
+| | CMA-ES | 1.84 ± 0.17 | 1.92 | 0.62 | 0.501 ± 0.008 | 0.501 | 0.012 |
+| | BoTorch vanilla BO | 2.32 ± 0.15 | 2.29 | 0.034 | 0.502 ± 0.003 | 0.502 | 0.001 |
 
 Median best-so-far at intermediate budgets (loss for F8, objective for 1124):
 
 | Problem | Method | 60 evals | 150 | 300 | 600 |
 |:---|:---|:---:|:---:|:---:|:---:|
-| BBOB F8 | Generated on BBOB | **155** | **37.5** | **9.98** | 8.68 |
-| | Generated on real-world | 4450 | 3218 | 555 | 266 |
-| | BoTorch | 319 | 130 | 53.0 | 37.0 |
-| | CMA-ES | 1021 | 230 | 20.0 | **4.39** |
-| Real-world 1124 | Generated on BBOB | 4.07 | 3.54 | 2.77 | 2.19 |
-| | Generated on real-world | 12.1 | 5.51 | 3.74 | 2.66 |
-| | BoTorch | **3.66** | **3.41** | 2.71 | 2.29 |
-| | CMA-ES | 4.50 | 3.80 | **2.21** | **1.92** |
+| BBOB F8 | Generated on BBOB | 351 | 351 | 289 | 267 |
+| | Generated on real-world | 8115 | 8115 | 8103 | 7975 |
+| | BoTorch | **319** | **130** | 53.0 | 37.0 |
+| | CMA-ES | 1021 | 230 | **20.0** | **4.39** |
+| Real-world 1124 | Generated on BBOB | 2.84 | 2.51 | 2.14 | 1.89 |
+| | Generated on real-world | **2.28** | **2.06** | **2.00** | **1.75** |
+| | BoTorch | 3.66 | 3.41 | 2.71 | 2.29 |
+| | CMA-ES | 4.50 | 3.80 | 2.21 | 1.92 |
 
-Mean wall clock time per run (one CPU core): `NovelBayesianOptimizationBO` 65 min, BoTorch 21 min, `AEBO_SB` 16 s, CMA-ES < 1 s.
+Mean wall clock time per run (one CPU core): `AdaptiveMaternExpoLCBBO` 67 min (F8) and 40 min (1124), BoTorch 21 min, `GradientForestHybridUCBBO` 17–26 s, CMA-ES < 1 s.
 
 ### 10.3 Discussion
 
-**Specialization of the BBOB algorithm.** On its own target `NovelBayesianOptimizationBO` is clearly the best method for the first ~400 evaluations (median loss 155 after 60 evaluations vs 319 for BoTorch and 1021 for CMA-ES; 10 vs 53 and 20 after 300). Its local perturbations around the incumbent follow the Rosenbrock valley well. After ~300 evaluations it stagnates around a loss of 9: the perturbation size is fixed for a given budget, the kernel is isotropic and the EI argmax is taken over a random pool, so it cannot refine the narrow valley any further. CMA-ES, which adapts its step size and covariance, overtakes it after ~400 evaluations and is significantly better at 600. It is also the most expensive method (it refits the GP twice per iteration).
+**Specialization of the real-world algorithm.** `GradientForestHybridUCBBO` is the best method on its own target at every budget (median 2.28 after 60 evaluations vs 3.66 for BoTorch and 4.50 for CMA-ES) and has the best final median (1.75). By AOCC it is significantly better than all three other methods (p ≤ 0.012). On the final value alone, the difference with CMA-ES and the BBOB algorithm is not significant (p = 0.62), because CMA-ES catches up late in the run; it is significantly better than BoTorch (p = 0.034). Its strength on 1124 comes from what is in practice a local search: the best of 20 random points of the FM problem is usually in a reasonable basin, and a random forest screened search with batches of 3 in a fixed box around it improves it steadily and very cheaply. The same design fails completely on F8 (median loss 8115 after 60 and 7975 after 600 evaluations, almost no progress after the initial design): the box around the best initial point does not contain the curved Rosenbrock valley, and because the centre never moves (section 9.3), the algorithm cannot follow it.
 
-**Specialization of the real-world algorithm.** `AEBO_SB` was the best of 100 candidates on problem 1124 with 60 evaluations, but with 600 evaluations it is the worst method on its own target (median 2.66, significantly worse than CMA-ES). The reason is that its design is tied to the budget, not to the problem: the pure space filling phase is 40 % of the budget (24 evaluations in stage 1, 240 in stage 2), and the GP is fitted on at most 100 random points, so most of the data is ignored at large budgets. After 60 evaluations of the 600 budget it is still sampling at random (median 12.1). The algorithm is specialised to the stage 1 setting (budget 60) rather than to the problem.
+**Specialization of the BBOB algorithm.** `AdaptiveMaternExpoLCBBO` was the best of 100 candidates on F8 with 60 evaluations, and after 60 evaluations it is indeed close to the best method (median loss 351 vs 319 for BoTorch and 1021 for CMA-ES), but it then stagnates (351 after 150 evaluations, 267 after 600) and with the full budget it is clearly behind CMA-ES and BoTorch on its own target. The reason is the scale of the GP: it has no output scale and does not normalise y, so its posterior standard deviation is at most 1, while the F8 values differ by $10^2$ to $10^5$. The exploration term $\kappa \sigma \le 2$ is then negligible, the LCB is practically the GP mean, and its minimum lies at the best observed point, so the algorithm keeps evaluating (almost) the same point. We checked this with a short run (seed 110, 90 evaluations): on F8 the median distance of a new point to the current best point is 0.01 (median distance to the nearest evaluated point 0.0), on 1124 it is 6.2 (2.5). Stage 1 with 60 evaluations could not detect this, because most of the progress there comes from the initial design and the first iterations.
 
-**Generalization.** The algorithm generated on BBOB transfers well: on problem 1124 it is second (median 2.19) and not significantly different from CMA-ES (p = 0.21) or BoTorch (p = 0.18). The algorithm generated on the real-world problem does not transfer: on F8 its exploratory design is far behind all other methods (median loss 266, 30× worse than the BBOB algorithm), because random space filling cannot find the narrow curved valley of Rosenbrock. In this experiment the more exploitative, budget-independent design generalizes better than the exploratory one.
+**Generalization.** The BBOB algorithm transfers well to the real-world problem: on 1124 it is second by AOCC (0.507) and its final median (1.89) is not significantly different from the best (p = 0.62), better than CMA-ES and BoTorch. On 1124 the values in the good region are of the order of 2–5, comparable with the exploration term $\kappa \sigma$, so the same LCB really balances exploration and exploitation there (the check above), while on its own target it does not. The real-world algorithm does not transfer to F8 (worst method by far). So in this experiment generalization depends more on whether the implicit assumptions of the code hold (scale of the objective for the GP, a good basin near the best initial point for the local search) than on which problem the algorithm was generated on.
 
-**Baselines.** CMA-ES has the best final value on both problems, while the BO methods are better at small budgets (for F8 the BBOB algorithm and BoTorch lead until 300–400 evaluations). The early lead of BoTorch on problem 1124 (objective ≈ 3.7 after 12 evaluations in every run) comes from its initial design, not from the model: the provided baseline uses a *centred* Latin hypercube (`criterion="center"`), so every design contains the grid value $x_1 = 0.417$, which corresponds to an almost zero amplitude of the generated sound wave and gives $f \approx 4$ (the "silent signal" plateau) whatever the other variables are. Uniformly random points reach $f < 4.3$ with probability ≈ 0.4 %.
+**Final value vs AOCC.** On F8 both views agree (CMA-ES first, then BoTorch and the two generated algorithms). On 1124 the AOCC separates the methods more clearly than the final value, because the generated real-world algorithm is ahead from the start while CMA-ES only catches up after ≈ 300 evaluations; the anytime performance is also what stage 1 selected for.
 
-**Limitations.** The LLaMEA searches improved the AOCC only slightly (+0.017 and +0.012) and the AOCC with bounds $[10^{-8}, 10^{9}]$ compresses differences between candidates. Selecting with 60 evaluations favours algorithms tuned to that budget, as `AEBO_SB` shows; evaluating candidates also at a larger budget would be a natural extension. One search per target was run, so the variability of the LLaMEA search itself is not measured.
+**Baselines.** CMA-ES has the best final value on F8 and catches up on 1124 at the end, while the BO methods are better at small budgets. The early lead of BoTorch over CMA-ES on problem 1124 (objective ≈ 3.7 after 12 evaluations in every run) comes from its initial design, not from the model: the provided baseline uses a *centred* Latin hypercube (`criterion="center"`), so every design contains the grid value $x_1 = 0.417$, which corresponds to an almost zero amplitude of the generated sound wave and gives $f \approx 4$ (the "silent signal" plateau) whatever the other variables are. Uniformly random points reach $f < 4.3$ with probability ≈ 0.4 %.
 
-**Note on the stage 2 time limit.** In a first stage 2 run the generated algorithm runs were limited to 1 h; all 20 runs of `NovelBayesianOptimizationBO` stopped after 558–589 evaluations. These runs are kept in `outputs/stage2_benchmark/runs_time_limited_1h/` and were repeated with a 3 h limit, where they all finished the 600 evaluations (≤ 74 min). The 60 other runs were not repeated.
+**Limitations.** One search was run per target, so the variability of the LLaMEA search itself is not measured, and the stage 1 fitness (60 evaluations) favours algorithms that start fast, as `AdaptiveMaternExpoLCBBO` shows. Half of the candidates were lost to programming errors. The best real-world algorithm owes part of its behaviour to a bug, which shows that the AOCC only selects behaviour, not the intended design.
 
-## 11. Alternative experiment: prompts for more diverse algorithms
+### 10.4 Note on 5 stage 2 runs that were repeated
 
-In the main experiment the searches converged to one design type: every working candidate used a scikit-learn GP and almost all used expected improvement on a random candidate pool (table below), and the best AOCC stopped improving after a few generations. One cause is the LLaMEA-BO mutation prompt, which always asks to *"Refine the strategy of the selected solution to improve it."*. We therefore repeated the whole experiment with a second prompt variant, `prompt_variant: "diverse"` in `configs_diverse.yaml`; everything else (LLM, temperature, budgets, seeds, population, code template, evaluation) is identical.
+In the stage 2 run on vibranium, 5 of the 10 runs of `GradientForestHybridUCBBO` on problem 1124 (seeds 111, 113, 114, 115, 118) stopped right after the initial design with `can't start new thread` or `'DummyProcess' object has no attribute 'terminate'`. The algorithm creates its random forest with `n_jobs=-1` (one thread per core, 48 on vibranium), and with 40 runs in parallel the machine ran out of threads; this is a problem of the benchmark setup, not of the algorithm (it did not happen in stage 1 with 10 parallel runs). The 5 runs were repeated with the same code, seeds and package versions with 2 parallel workers (`logs/stage2_rerun_thread_crash.log`); the crashed runs are kept in `outputs/stage2_benchmark/runs_thread_crash/`. To check that the other machine gives the same numbers, seeds 110 and 116 were repeated as well and gave exactly the same results as on vibranium (2.1093 and 1.7894). `stage2_benchmark.py` now sets `LOKY_MAX_CPU_COUNT=1`, so joblib uses one thread per run; this gives identical results (the random forest is seeded) and avoids the problem.
 
-**Changes in the "diverse" prompt** (`llamevol/prompt_generators/bl_prompt_generator.py`, `DESIGN_SPACE` and `DIVERSE_MUTATIONS`):
+The BoTorch and CMA-ES runs do not depend on the LLM; they were computed once with the same `stage2_benchmark.py`, seeds and settings and are used as they are.
 
-1. The task description lists alternatives for every BO component (initial design, surrogate model, acquisition function, acquisition optimizer, exploration strategy), e.g. random forests, ARD kernels, log-transformed y, lower confidence bound, Thompson sampling, L-BFGS-B or differential evolution, TuRBO-like trust regions and restarts, and asks not to always use the same default choices.
-2. Every mutation uses one of three operators, chosen at random (Python `random.Random(110)`, so the sequence is reproducible): **refine** (the original text), **replace component** (replace one randomly chosen component by a substantially different alternative from the list) or **new idea** (design an algorithm whose main idea differs from the whole population). The chosen operator is part of the saved prompt of each candidate.
-
-Stage 2 runs the two new best algorithms with exactly the same protocol; the BoTorch and CMA-ES runs are the same as in the main experiment (same seeds and settings), so their csv files are reused.
+## 11. Search behaviour
 
 ### 11.1 Diversity of the searches
 
-`analyze_diversity.py` classifies every working candidate by keyword rules on its code (surrogate, acquisition function, acquisition optimizer, trust region) and computes the mean pairwise code similarity (`difflib`, 1 = identical). The rules are simple, so the numbers are approximate.
+`analyze_diversity.py` classifies every working candidate by keyword rules on its code (surrogate, acquisition function, acquisition optimizer, trust region) and computes the mean pairwise code similarity (`difflib`, 1 = identical). The rules are simple, so the numbers are approximate. From `outputs/convergence_analysis/diversity.csv`:
 
-| | BBOB, baseline prompt | BBOB, diverse prompt | 1124, baseline prompt | 1124, diverse prompt |
-|:---|:---:|:---:|:---:|:---:|
-| working candidates | 80 | 54 | 78 | 73 |
-| distinct component combinations | 9 | **19** | 8 | **25** |
-| surrogates | GP 80 | GP 43, random forest 11 | GP 78 | GP 57, random forest 16 |
-| acquisition functions | EI in all 80 (EI only: 62) | EI in 51 (EI only: 45), LCB, Thompson | EI in all 78 (EI only: 68) | EI only 23, Thompson only 18, LCB only 16, mixtures 16 |
-| acquisition optimizer (pool / L-BFGS / DE) | 49 / 8 / 23 | 42 / 10 / 2 | 75 / 3 / 0 | 10 / 30 / 33 |
-| with a trust region | 18 | 34 | 1 | 51 |
-| mean code similarity | 0.39 | 0.45 | 0.61 | **0.49** |
-| best AOCC | 0.350 | **0.369** | 0.460 | **0.470** |
-| generation of the best | 8 | 4 | 8 | 5 |
+| | BBOB F8 search | Real-world 1124 search |
+|:---|:---:|:---:|
+| working candidates | 49 | 55 |
+| distinct component combinations | 21 | 18 |
+| surrogates | GP 37, random forest 12 | GP 41, random forest 14 |
+| acquisition functions | LCB/UCB 21, Thompson 14, EI 12, mixtures 2 | EI 29, Thompson 18, LCB/UCB 7, other 1 |
+| acquisition optimizer (pool / L-BFGS / DE) | 3 / 37 / 9 | 49 / 2 / 4 |
+| with a trust region | 13 | 30 |
+| mean code similarity | 0.56 | 0.36 |
+| best AOCC | 0.353 | 0.495 |
 
-The diverse prompt doubles (BBOB) to triples (1124) the number of distinct designs and introduces surrogates and acquisition functions that never appeared before (random forests, Thompson sampling, pure LCB), and both searches find a better algorithm than the baseline prompt. The designs are more diverse but not novel in a research sense: the LLM mostly recombines the standard components that the prompt lists (TuRBO-like trust regions, SMAC-like random forests). The price is a higher failure rate on BBOB (46 instead of 20 failed candidates, mostly timeouts and crashes of more complex designs).
+Both searches use several surrogates and acquisition functions; the designs are more varied than with the standard LLaMEA-BO mutation prompt (in a preliminary run with that prompt every working candidate used a GP with expected improvement), but they are recombinations of the standard components listed in the prompt, not new ideas in a research sense.
 
-### 11.2 The two new algorithms
+### 11.2 Why the searches improve slowly
 
-**BBOB: `AdaptiveTrustRegionBO`** (`outputs_diverse/bbob_f8/best_bbob_f8_AdaptiveTrustRegionBO.py`, candidate 44, generation 4)
+The improvement per generation is small, and the logs suggest three reasons:
 
-```text
-n_init = min(max(10, 2d+1), budget/4) = 13 LHS points, radius r = 1
-loop until the budget is used:
-    GP <- fit GP(Matern 5/2, one length scale, + white noise), normalize_y, 2 restarts
-    if the best value improved by > 0.5 %: r <- min(1.2 r, 5)
-    else after 3 iterations without improvement: r <- max(0.5 r, 0.01)
-    if r reached 0.01 without improvement: r <- 1       # "restart", around the same best point
-    C <- min(20d, 500) = 120 uniform points in the box [x_best - r, x_best + r] (clipped)
-    evaluate the point of C with the largest expected improvement
-return best (y, x)
-```
+* **Most mutations make an algorithm worse.** Only 18 % (BBOB) and 10 % (real-world) of the offspring have a higher AOCC than their parent, mostly because many offspring crash, so with elitist (4 + 12) selection the same parents survive for several generations.
+* **The population loses its diversity.** All 12 candidates of the last BBOB generation descend from one algorithm of generation 0 (#4), and 9 of 12 in the real-world search (#1), so the search becomes a local search around one lineage (though the lineage itself changes structure, section 9.1).
+* **The fitness is noisy compared with the improvements.** The AOCC of the best algorithm varies with a standard deviation of 0.017 (BBOB) and 0.008 (real-world) over the 10 seeds, so the mean AOCC of a candidate has a standard error of ≈ 0.005 and ≈ 0.002. Differences of the order of 0.01 between candidates cannot be told apart reliably on BBOB. Every candidate is evaluated only once on the same 10 seeds, and the elite are the highest of many noisy scores, so their AOCC is biased upward and is never re-evaluated, which keeps the same parents in the population.
 
-Compared with the main experiment it replaces global candidate pools by a trust region around the incumbent that adapts its size, i.e. a TuRBO-like local BO (without TuRBO's independent restarts). The comment in the code calls the kernel "ARD", but it uses a single length scale.
-
-**Real-world 1124: `EMBO_SB`** (`outputs_diverse/real_world_1124/best_real_world_1124_EMBO_SB.py`, candidate 57, generation 5)
-
-```text
-n_init = max(2d+1, 10) = 13 Sobol points
-loop until one evaluation is left:
-    RF <- random forest (50 trees, depth 10) on all points
-    batch <- min(5, remaining/4) (2-3 at the end)
-    x1 <- among 10-20 Sobol points, the one with the lowest RF prediction     # see below
-    x2..x_batch <- x_best + N(0, 0.2^2) (clipped)                            # local search
-    evaluate the batch
-return best (y, x)
-```
-
-The code describes its acquisition function as a lower confidence bound, but the "uncertainty" is the range of all observed values, the same for every point, so it only ranks by the RF mean. The acquisition optimizer runs L-BFGS-B on the *negative* of this value (a sign error), but the RF prediction is piecewise constant, so L-BFGS-B stops at its starting point and the sign has no effect: in practice the algorithm screens a few Sobol points with the random forest and spends most evaluations on Gaussian perturbations of the best point. It also stops one evaluation before the budget.
-
-### 11.3 Stage 2 results
-
-Median after 600 evaluations (loss for F8, objective for 1124), p-value of the Wilcoxon rank-sum test against the best median (Holm corrected), from `outputs_diverse/convergence_analysis/stage2_statistics.csv`:
-
-| Problem | Method | Mean ± SE | Median | p vs best |
-|:---|:---|:---:|:---:|:---:|
-| BBOB F8 | **Diverse, generated on BBOB (`AdaptiveTrustRegionBO`)** | 11.0 ± 6.2 | **3.35** | — |
-| | CMA-ES | 4.20 ± 0.32 | 4.39 | 0.43 |
-| | Diverse, generated on real-world (`EMBO_SB`) | 57.2 ± 20.6 | 11.2 | 0.022 |
-| | BoTorch | 35.2 ± 5.1 | 37.0 | 0.022 |
-| | *(main experiment) generated on BBOB / on real-world* | *9.10 / 288.5* | *8.68 / 266* | |
-| Real-world 1124 | **CMA-ES** | 1.84 ± 0.17 | **1.92** | — |
-| | Diverse, generated on real-world (`EMBO_SB`) | 1.98 ± 0.11 | 2.00 | 0.57 |
-| | BoTorch | 2.32 ± 0.15 | 2.29 | 0.18 |
-| | Diverse, generated on BBOB (`AdaptiveTrustRegionBO`) | 2.87 ± 0.19 | 2.97 | 0.011 |
-| | *(main experiment) generated on BBOB / on real-world* | *2.22 / 2.71* | *2.19 / 2.66* | |
-
-Medians at intermediate budgets for the new algorithms: on F8 `AdaptiveTrustRegionBO` reaches 77 / 11.1 / 4.4 after 60 / 150 / 300 evaluations (CMA-ES: 1021 / 230 / 20), on 1124 `EMBO_SB` reaches 3.43 / 2.59 / 2.34 (CMA-ES: 4.50 / 3.80 / 2.21). Mean run time: 28 min and 4 min per run.
-
-Plots: `outputs_diverse/convergence_analysis/stage2_bbob_loss_convergence.png`, `stage2_realworld_objective_convergence.png`, `stage1_aocc_history.png`.
-
-**Discussion.** With the diverse prompt both generated algorithms are better on their own target than in the main experiment. `AdaptiveTrustRegionBO` has the best median on F8 of all methods and is far ahead at small budgets, but one run (seed 117) got stuck (loss 61), which explains the large mean and why the difference to CMA-ES is not significant. `EMBO_SB` is now close to CMA-ES on 1124 (not significantly different) and better than BoTorch. Generalization reverses compared with the main experiment: the real-world algorithm `EMBO_SB` transfers well to F8 (median 11.2, 24× better than `AEBO_SB`), because its local Gaussian search follows the Rosenbrock valley, while the trust region algorithm from BBOB gets stuck on the multimodal FM problem (median 2.97, no progress after ≈150 evaluations), because its "restart" keeps searching around the same local optimum. Algorithms that work well locally specialise to unimodal or multimodal structure, which is visible in both experiments.
-
-### 11.4 Why the searches converge early, and temperature
-
-In all four searches the best AOCC stops improving after 2–5 generations (best per generation, main BBOB: 0.333, 0.333, 0.346, 0.346, …, 0.350). The logs suggest three reasons:
-
-* **Most mutations make an algorithm worse.** Only 21–26 % of the offspring have a higher AOCC than their parent (mean change −0.002 to −0.011), so with elitist (4 + 12) selection the same parents survive.
-* **The population loses its diversity.** In three of the four searches all 12 candidates of the last generation descend from a single algorithm of generation 0, so the search becomes a local search around one design.
-* **The fitness is noisy compared with the improvements.** The AOCC of the best algorithm varies with a standard deviation of 0.015–0.02 over the 10 seeds, so the mean AOCC of a candidate has a standard error of ≈ 0.005–0.006 and the difference between two candidates ≈ 0.008. A truly better candidate is still selected more often than not (≈ 70 % for a true difference of 0.005), but differences below ≈ 0.01 cannot be told apart reliably. In addition, every candidate is evaluated only once on the same 10 seeds, and the elite are the highest of many noisy scores, so their AOCC is biased upward (they were lucky on these seeds) and is never re-evaluated: new candidates that are as good or slightly better usually score below the elite, which keeps the same parents in the population. The late improvements (e.g. 0.346 → 0.350) are within this noise. With 60 evaluations a large part of the AOCC is also determined by the initial design.
-
-Raising the temperature (0.8 now) would mainly add token-level randomness: more varied details, but also more broken code (syntax errors are already the most frequent failure) and it does not address the selection, lineage and noise effects above. Changing *what* is asked (section 11.1) increased the component diversity at the same temperature. More effective options would be diversity-preserving selection (more parents, niching by design type, non-elitist selection), more seeds or a larger budget per candidate to reduce the fitness noise, and evaluating candidates at more than one budget.
+More effective options than a higher temperature (more token-level randomness, and more broken code) would be diversity-preserving selection (more parents, niching by design type, non-elitist selection), more seeds or a larger budget per candidate to reduce the fitness noise, and evaluating candidates at more than one budget.
 
 ## 12. External code attribution
 

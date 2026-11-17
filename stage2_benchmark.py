@@ -3,6 +3,9 @@ import os
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
+# generated code can use scikit-learn with n_jobs=-1 (one thread per core); with 40 parallel runs this
+# runs out of threads, so joblib sees one cpu (the results are the same, only the threads differ)
+os.environ["LOKY_MAX_CPU_COUNT"] = "1"
 # Stage 2 runs on the CPU only: the provided BoTorch baseline uses "cuda:3" when a GPU is visible,
 # which does not exist on single-GPU machines, and small GPs are not faster on a GPU anyway
 os.environ["CUDA_VISIBLE_DEVICES"] = ""

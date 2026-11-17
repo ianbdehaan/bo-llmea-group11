@@ -91,7 +91,8 @@ def run_stage1_for_target(target_name, problem_id, instance_id, problem_desc, cf
     )
 
     # 3. LLM
-    llm_manager = LLMmanager(model_name=llm_cfg['model_name'], base_url=llm_cfg['ollama_url'], num_ctx=llm_cfg['num_ctx'])
+    llm_manager = LLMmanager(model_name=llm_cfg['model_name'], base_url=llm_cfg['ollama_url'], num_ctx=llm_cfg['num_ctx'],
+                             think=llm_cfg.get('think'))
     llm_manager.max_api_retries = llm_cfg['max_api_retries']
     llm_manager.max_wait_seconds = llm_cfg['max_wait_seconds']
 

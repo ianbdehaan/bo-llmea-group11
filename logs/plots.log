@@ -1,23 +1,21 @@
-/var/tmp/s3622223/bo-llmea-group11/.venv/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
-  warnings.warn(
 Stage 1 LLaMEA plots saved in: outputs/convergence_analysis/stage1_bbob_f8
 Stage 1 LLaMEA plots saved in: outputs/convergence_analysis/stage1_real_world_1124
-                 target  candidates  failed  best_index  best_generation                   best_name  best_aocc  prompt_tokens  response_tokens
-    BBOB F8, instance 1         100      20          89                8 NovelBayesianOptimizationBO   0.349940         397212           323002
-Real-world problem 1124         100      22          94                8                     AEBO_SB   0.460065         357820           279402
+                 target  candidates  failed  best_index  best_generation                 best_name  best_aocc  prompt_tokens  response_tokens
+    BBOB F8, instance 1         100      51          90                8   AdaptiveMaternExpoLCBBO   0.352827         298597           461545
+Real-world problem 1124         100      45          91                8 GradientForestHybridUCBBO   0.494947         288319           463598
 Saved plot: outputs/convergence_analysis/stage1_aocc_history.png
 Saved plot: outputs/convergence_analysis/stage2_bbob_loss_convergence.png
 Saved plot: outputs/convergence_analysis/stage2_realworld_objective_convergence.png
 
-Stage 2 final performance (p-values: Wilcoxon rank-sum vs best median, Holm corrected)
-                problem         metric                                       algorithm  mean    std     se  median    min   max  runs  p_vs_best  p_vs_best_holm  best_median
-    BBOB F8, instance 1 loss f - f_opt                                          CMA-ES 4.203  1.004 0.3176   4.394  1.814 5.376    10        NaN             NaN         True
-    BBOB F8, instance 1 loss f - f_opt Generated on BBOB (NovelBayesianOptimizationBO) 9.101  2.855 0.9027   8.685   5.59 16.03    10  0.0001827        0.000548        False
-    BBOB F8, instance 1 loss f - f_opt                    BoTorch vanilla BO (GP + EI) 35.17  16.12  5.098   36.97  17.16 58.62    10  0.0001827        0.000548        False
-    BBOB F8, instance 1 loss f - f_opt               Generated on real-world (AEBO_SB) 288.5    155  49.03   265.8  101.5 562.4    10  0.0001827        0.000548        False
-Real-world problem 1124    objective f                                          CMA-ES  1.84 0.5341 0.1689   1.919 0.8997 2.536    10        NaN             NaN         True
-Real-world problem 1124    objective f Generated on BBOB (NovelBayesianOptimizationBO)  2.22 0.6184 0.1955   2.186  1.057 3.003    10     0.2123          0.2123        False
-Real-world problem 1124    objective f                    BoTorch vanilla BO (GP + EI) 2.318  0.484 0.1531   2.292  1.613  3.01    10    0.08897          0.1779        False
-Real-world problem 1124    objective f               Generated on real-world (AEBO_SB) 2.715 0.4547 0.1438   2.656  1.918 3.283    10   0.002202        0.006607        False
+Stage 2 final value and AOCC (p-values: Wilcoxon rank-sum vs best median, Holm corrected)
+                problem         metric                                           algorithm  mean    std     se  median    min   max  runs  p_vs_best  p_vs_best_holm  best_median  aocc_mean  aocc_std  aocc_median  aocc_p_vs_best_holm  best_aocc_median
+    BBOB F8, instance 1 loss f - f_opt                                              CMA-ES 4.203  1.004 0.3176   4.394  1.814 5.376    10        NaN             NaN         True     0.4285   0.01944       0.4361                  NaN              True
+    BBOB F8, instance 1 loss f - f_opt                        BoTorch vanilla BO (GP + EI) 35.17  16.12  5.098   36.97  17.16 58.62    10  0.0001827        0.000548        False     0.4142   0.01064       0.4158              0.02575             False
+    BBOB F8, instance 1 loss f - f_opt         Generated on BBOB (AdaptiveMaternExpoLCBBO) 370.4  382.9  121.1   267.2   48.1  1130    10  0.0001827        0.000548        False      0.386   0.02886        0.379             0.003412             False
+    BBOB F8, instance 1 loss f - f_opt Generated on real-world (GradientForestHybridUCBBO)  7721  772.1  244.1    7975   6492  8719    10  0.0001827        0.000548        False        0.3  0.002582       0.2991             0.000548             False
+Real-world problem 1124    objective f Generated on real-world (GradientForestHybridUCBBO) 1.629  0.457 0.1445   1.751 0.7958 2.109    10        NaN             NaN         True     0.5132  0.005999       0.5123                  NaN              True
+Real-world problem 1124    objective f         Generated on BBOB (AdaptiveMaternExpoLCBBO) 1.938 0.4049  0.128   1.891  1.493 2.886    10     0.3075           0.615        False     0.5065  0.003517        0.507              0.01159             False
+Real-world problem 1124    objective f                                              CMA-ES  1.84 0.5341 0.1689   1.919 0.8997 2.536    10     0.3447           0.615        False     0.5012   0.00833       0.5006              0.01159             False
+Real-world problem 1124    objective f                        BoTorch vanilla BO (GP + EI) 2.318  0.484 0.1531   2.292  1.613  3.01    10    0.01133         0.03399        False     0.5023  0.003163       0.5019             0.001319             False
 
 All plots generated in: outputs/convergence_analysis

@@ -1,0 +1,12 @@
+                                                                                                                         0                                                                                          1
+search                                                                                                     outputs/bbob_f8                                                                    outputs/real_world_1124
+candidates                                                                                                             100                                                                                        100
+working                                                                                                                 49                                                                                         55
+distinct_component_combinations                                                                                         21                                                                                         18
+surrogates                                                                       {'GP (sklearn)': 37, 'random forest': 12}                                                  {'GP (sklearn)': 41, 'random forest': 14}
+acquisitions                                        {'UCB/LCB': 21, 'EI': 12, 'Thompson': 14, 'EI+UCB/LCB': 1, 'EI+PI': 1}                                       {'EI': 29, 'Thompson': 18, 'UCB/LCB': 7, 'other': 1}
+acq_optimizers                   {'gradient (L-BFGS) restarts': 37, 'differential evolution': 9, 'candidate pool only': 3}  {'candidate pool only': 49, 'differential evolution': 4, 'gradient (L-BFGS) restarts': 2}
+with_trust_region                                                                                                       13                                                                                         30
+mean_code_similarity                                                                                                 0.563                                                                                      0.359
+aocc_std                                                                                                            0.0216                                                                                     0.0136
+best_aocc                                                                                                           0.3528                                                                                     0.4949

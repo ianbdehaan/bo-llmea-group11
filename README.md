@@ -98,8 +98,8 @@ All scripts read `configs.yaml`; another config file can be given with `--config
 | `stage1_aocc_history.png/pdf` | AOCC of every candidate in generation order (failed ones as AOCC 0) and the best AOCC so far, both searches |
 | `stage1_summary.csv` | candidates, failures, best candidate and AOCC, token usage per search |
 | `stage1_<target>/es_aoc_lines.png`, `search_aoc_voilin.png`, `overall_error_rate_voilin.png` | LLaMEA-BO plots: AOCC per generation, distribution, error rate |
-| `stage2_bbob_loss_convergence.png/pdf` | BBOB: best-so-far loss $f - f_{opt}$ vs evaluations, mean ± standard error over the 10 runs, linear axes; left the whole run, right a zoom on evaluations 60–600 |
-| `stage2_realworld_objective_convergence.png/pdf` | real-world problem: best-so-far objective vs evaluations, same layout |
+| `stage2_bbob_loss_convergence.png/pdf` | BBOB: best-so-far loss $f - f_{opt}$ vs evaluations, mean ± standard error over the 10 runs, log scale on the y axis |
+| `stage2_realworld_objective_convergence.png/pdf` | real-world problem: best-so-far objective vs evaluations, mean ± standard error, log scale on the y axis |
 | `stage2_statistics.csv` | per method and problem: the final value after 600 evaluations (mean, std, SE, median, min, max) and the AOCC of the runs (mean, std, median), each with a two-sided Wilcoxon rank-sum test (10 vs 10 runs) against the best method (best median), Holm corrected per problem |
 
 `outputs/stage2_benchmark/stage2_final_performance.csv` (written by stage 2) has the final value summary without the tests.
@@ -308,15 +308,11 @@ All numbers below are produced by `stage2_benchmark.py` and `run_analysis_plots.
 
 ### 10.1 Convergence plots
 
-Best-so-far value, mean ± standard error over the 10 runs, linear axes. The left panel shows the whole run; because the first evaluations are orders of magnitude larger than the rest, the right panel zooms in on evaluations 60 (10·d, the stage 1 budget) to 600.
+Best-so-far value, mean ± standard error over the 10 runs, log scale on the y axis.
 
-**BBOB F8 (loss $f - f_{opt}$)**
-
-![BBOB](outputs/convergence_analysis/stage2_bbob_loss_convergence.png)
-
-**Real-world 1124 (objective $f$)**
-
-![RW](outputs/convergence_analysis/stage2_realworld_objective_convergence.png)
+| BBOB F8 (loss) | Real-world 1124 (objective) |
+|:---:|:---:|
+| ![BBOB](outputs/convergence_analysis/stage2_bbob_loss_convergence.png) | ![RW](outputs/convergence_analysis/stage2_realworld_objective_convergence.png) |
 
 ### 10.2 Final value after 600 evaluations and AOCC
 
